@@ -125,3 +125,7 @@ The following tables describe the models used in the API.
 | `status` | CharField(50) | Choices, Default | Status (PENDING, SENT, ACCEPTED, EXPIRED).|
 | `sentAt` | DateTimeField | Null/Blank | Timestamp of the sent invitation. |
 | `permission` | ForeignKey | Cascade | The permission associated with this invite. |
+
+## Short Video Demonstration
+
+[[Chithara AI Music Generator Database Model Demo]](https://youtu.be/dBhNUbnbQfY)
