@@ -1,4 +1,5 @@
 # Chithara-AI-music-generator
+
 This project is part of 0129243-65 Principle of Software Design
 
 ## Setup Instructions
@@ -8,12 +9,14 @@ This project is part of 0129243-65 Principle of Software Design
 To isolate the project's dependencies, create a virtual environment (`venv`).
 
 **On Windows:**
+
 ```cmd
 python -m venv venv
 venv\Scripts\activate
 ```
 
 **On macOS/Linux:**
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
@@ -22,6 +25,7 @@ source venv/bin/activate
 ### 2. Install Dependencies
 
 Install the required packages using `pip`. Ensure your virtual environment is active.
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -29,9 +33,19 @@ pip install -r requirements.txt
 ### 3. Run the Development Server
 
 Navigate to the `backend` directory and start the Django development server:
+
 ```bash
 cd backend
 python manage.py runserver
+```
+
+### 4. Route Endpoints
+
+The following endpoints are available for testing:
+
+```bash
+/admin/ - Django admin interface
+
 ```
 
 ---
@@ -41,6 +55,7 @@ python manage.py runserver
 The following tables describe the models used in the API.
 
 ### User
+
 | Field | Type | Attributes | Description |
 | --- | --- | --- | --- |
 | `userId` | AutoField | Primary Key | Unique identifier for the user. |
@@ -49,6 +64,7 @@ The following tables describe the models used in the API.
 | `role` | CharField(50) | | Role of the user in the system. |
 
 ### MusicLibrary
+
 | Field | Type | Attributes | Description |
 | --- | --- | --- | --- |
 | `libraryId` | AutoField | Primary Key | Unique identifier for the library. |
@@ -56,6 +72,7 @@ The following tables describe the models used in the API.
 | `createdAt` | DateTimeField | Auto Now Add | Date and time the library was created. |
 
 ### MusicTrack
+
 | Field | Type | Attributes | Description |
 | --- | --- | --- | --- |
 | `trackId` | AutoField | Primary Key | Unique identifier for the track. |
@@ -69,6 +86,7 @@ The following tables describe the models used in the API.
 | `library` | ForeignKey | Cascade | The library this track belongs to. |
 
 ### ListeningActivity
+
 | Field | Type | Attributes | Description |
 | --- | --- | --- | --- |
 | `activityId` | AutoField | Primary Key | Unique id for the listening activity. |
@@ -78,6 +96,7 @@ The following tables describe the models used in the API.
 | `track` | ForeignKey | Cascade | Track that was listened to. |
 
 ### GenerationRequest
+
 | Field | Type | Attributes | Description |
 | --- | --- | --- | --- |
 | `requestId` | AutoField | Primary Key | Unique request identifier. |
@@ -88,6 +107,7 @@ The following tables describe the models used in the API.
 | `track` | OneToOneField | Cascade, Null/Blank| The generated Track associated with the prompt. |
 
 ### SharePermission
+
 | Field | Type | Attributes | Description |
 | --- | --- | --- | --- |
 | `permissionId`| AutoField | Primary Key | Unique permission identifier. |
@@ -97,6 +117,7 @@ The following tables describe the models used in the API.
 | `track` | ForeignKey | Cascade | Track this permission applies to. |
 
 ### EmailInvitation
+
 | Field | Type | Attributes | Description |
 | --- | --- | --- | --- |
 | `invitationId`| AutoField | Primary Key | Unique invitation ID. |
