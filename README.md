@@ -30,16 +30,24 @@ Install the required packages using `pip`. Ensure your virtual environment is ac
 pip install -r requirements.txt
 ```
 
-### 3. Run the Development Server
+### 3. Apply Database Migrations
 
-Navigate to the `backend` directory and start the Django development server:
+Navigate to the `backend` directory and apply the database migrations:
 
 ```bash
 cd backend
+python manage.py migrate
+```
+
+### 4. Run the Development Server
+
+Start the Django development server:
+
+```bash
 python manage.py runserver
 ```
 
-### 4. Route Endpoints
+### 5. Route Endpoints
 
 The following endpoints are available for testing:
 
