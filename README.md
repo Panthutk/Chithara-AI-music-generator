@@ -75,11 +75,24 @@ python manage.py runserver
 
 ### 7. Route Endpoints (Localhost)
 
+The Django REST Framework is enabled, providing standard CRUD endpoints for our models.
+
 The following endpoints are available for testing:
 
 ```bash
 http://127.0.0.1:8000/admin/ - Django admin interface
+http://127.0.0.1:8000/api/users/           - Supported: GET, POST
+http://127.0.0.1:8000/api/users/<id>/      - Supported: GET, PUT, PATCH, DELETE
+http://127.0.0.1:8000/api/libraries/       - Supported: GET, POST
+http://127.0.0.1:8000/api/libraries/<id>/  - Supported: GET, PUT, PATCH, DELETE
+http://127.0.0.1:8000/api/tracks/          - Supported: GET, POST
+http://127.0.0.1:8000/api/tracks/<id>/     - Supported: GET, PUT, PATCH, DELETE
 
+# and similarly for other models:
+http://127.0.0.1:8000/api/listening-activities/
+http://127.0.0.1:8000/api/generation-requests/
+http://127.0.0.1:8000/api/share-permissions/
+http://127.0.0.1:8000/api/email-invitations/
 ```
 
 ---
