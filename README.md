@@ -176,3 +176,4 @@ The following tables describe the models used in the API.
 ## Short Video Demonstration
 
 [[Chithara AI Music Generator Database Model Demo]](https://youtu.be/GCpMxChnVcU)
+[[Django Rest Framework API Demo]](https://youtu.be/NZ_4qv_uuA4)
