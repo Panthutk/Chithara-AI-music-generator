@@ -162,4 +162,4 @@ The following tables describe the models used in the API.
 
 ## Short Video Demonstration
 
-[[Chithara AI Music Generator Database Model Demo]](https://youtu.be/dBhNUbnbQfY)
+[[Chithara AI Music Generator Database Model Demo]](https://youtu.be/GCpMxChnVcU)
