@@ -4,9 +4,22 @@ This project is part of 0129243-65 Principle of Software Design
 
 ## Setup Instructions
 
-### 1. Create a Virtual Environment
+### 1. Clone the Repository
 
-To isolate the project's dependencies, create a virtual environment (`venv`).
+Start by cloning the project repository to your local machine and navigating into it:
+
+```bash
+git clone https://github.com/Panthutk/Chithara-AI-music-generator.git
+cd Chithara-AI-music-generator
+```
+
+### 2. Create a Virtual Environment
+
+Navigate to the `backend` directory and create a virtual environment (`venv`) to isolate the project's dependencies.
+
+```bash
+cd backend
+```
 
 **On Windows:**
 
@@ -22,7 +35,7 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 2. Install Dependencies
+### 3. Install Dependencies
 
 Install the required packages using `pip`. Ensure your virtual environment is active.
 
@@ -30,16 +43,29 @@ Install the required packages using `pip`. Ensure your virtual environment is ac
 pip install -r requirements.txt
 ```
 
-### 3. Apply Database Migrations
+### 4. Apply Database Migrations
 
-Navigate to the `backend` directory and apply the database migrations:
+Apply the database migrations to set up the database schema:
 
 ```bash
-cd backend
 python manage.py migrate
 ```
 
-### 4. Run the Development Server
+### 5. Create a Superuser
+
+To access the Django admin interface, run the provided script to create a default admin account (Username: `admin`, Password: `admin`):
+
+```bash
+python create_superuser.py
+```
+
+Alternatively, you can create your own custom superuser:
+
+```bash
+python manage.py createsuperuser
+```
+
+### 6. Run the Development Server
 
 Start the Django development server:
 
@@ -47,12 +73,12 @@ Start the Django development server:
 python manage.py runserver
 ```
 
-### 5. Route Endpoints
+### 7. Route Endpoints (Localhost)
 
 The following endpoints are available for testing:
 
 ```bash
-/admin/ - Django admin interface
+http://127.0.0.1:8000/admin/ - Django admin interface
 
 ```
 
