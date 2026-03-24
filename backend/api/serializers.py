@@ -41,3 +41,4 @@ class EmailInvitationSerializer(serializers.ModelSerializer):
     class Meta:
         model = EmailInvitation
         fields = '__all__'
+        read_only_fields = ['sentAt']
