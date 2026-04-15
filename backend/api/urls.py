@@ -9,6 +9,7 @@ from .views import (
     SharePermissionViewSet,
     EmailInvitationViewSet
 )
+from .controllers.GenerationViewController import GenerateMusicView, CheckGenerationStatusView
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
@@ -21,4 +22,6 @@ router.register(r'email-invitations', EmailInvitationViewSet, basename='email-in
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('generate-music/', GenerateMusicView.as_view(), name='generate-music'),
+    path('check-generation/', CheckGenerationStatusView.as_view(), name='check-generation'),
 ]

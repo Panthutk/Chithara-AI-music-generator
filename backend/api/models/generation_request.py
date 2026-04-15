@@ -13,6 +13,7 @@ class GenerationRequest(models.Model):
     status = models.CharField(
         max_length=50, choices=Status.choices, default=Status.QUEUED)
     createdAt = models.DateTimeField(auto_now_add=True)
+    suno_task_id = models.CharField(max_length=255, null=True, blank=True)
 
     user = models.ForeignKey(
         'api.User', on_delete=models.CASCADE, related_name='generation_requests')

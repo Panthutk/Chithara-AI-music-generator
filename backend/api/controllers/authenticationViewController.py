@@ -1,0 +1,1 @@
+# Empty controller for Authentication

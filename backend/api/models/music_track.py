@@ -24,6 +24,8 @@ class MusicTrack(models.Model):
     occasion = models.CharField(max_length=100)
     status = models.CharField(
         max_length=50, choices=Status.choices, default=Status.PROCESSING)
+    audio_url = models.URLField(max_length=1000, null=True, blank=True)
+    image_url = models.URLField(max_length=1000, null=True, blank=True)
 
     user = models.ForeignKey(
         'api.User', on_delete=models.CASCADE, related_name='tracks')
