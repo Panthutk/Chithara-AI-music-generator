@@ -2,13 +2,14 @@ import os
 import urllib.request
 import urllib.error
 import json
+from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
 from api.models.user import User
 from api.models.music_library import MusicLibrary
 from api.models.music_track import MusicTrack
 from api.models.generation_request import GenerationRequest
+from api.serializers import GenerationRequestSerializer
 
 # Simple .env loader
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
@@ -215,3 +216,6 @@ class CheckGenerationStatusView(APIView):
         except urllib.error.URLError as e:
             return Response({'error': str(e)}, status=status.HTTP_502_BAD_GATEWAY)
 
+class GenerationRequestViewSet(viewsets.ModelViewSet):
+    queryset = GenerationRequest.objects.all()
+    serializer_class = GenerationRequestSerializer

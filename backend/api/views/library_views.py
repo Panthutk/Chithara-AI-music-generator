@@ -1,25 +1,17 @@
 from rest_framework import viewsets
-from .models.user import User
-from .models.music_library import MusicLibrary
-from .models.music_track import MusicTrack
-from .models.listening_activity import ListeningActivity
-from .models.generation_request import GenerationRequest
-from .models.share_permission import SharePermission
-from .models.email_invitation import EmailInvitation
+from api.models.music_library import MusicLibrary
+from api.models.music_track import MusicTrack
+from api.models.listening_activity import ListeningActivity
+from api.models.share_permission import SharePermission
+from api.models.email_invitation import EmailInvitation
 
-from .serializers import (
-    UserSerializer,
+from api.serializers import (
     MusicLibrarySerializer,
     MusicTrackSerializer,
     ListeningActivitySerializer,
-    GenerationRequestSerializer,
     SharePermissionSerializer,
     EmailInvitationSerializer
 )
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
 
 class MusicLibraryViewSet(viewsets.ModelViewSet):
     queryset = MusicLibrary.objects.all()
@@ -32,10 +24,6 @@ class MusicTrackViewSet(viewsets.ModelViewSet):
 class ListeningActivityViewSet(viewsets.ModelViewSet):
     queryset = ListeningActivity.objects.all()
     serializer_class = ListeningActivitySerializer
-
-class GenerationRequestViewSet(viewsets.ModelViewSet):
-    queryset = GenerationRequest.objects.all()
-    serializer_class = GenerationRequestSerializer
 
 class SharePermissionViewSet(viewsets.ModelViewSet):
     queryset = SharePermission.objects.all()

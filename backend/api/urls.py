@@ -7,9 +7,10 @@ from .views import (
     ListeningActivityViewSet,
     GenerationRequestViewSet,
     SharePermissionViewSet,
-    EmailInvitationViewSet
+    EmailInvitationViewSet,
+    GenerateMusicView,
+    CheckGenerationStatusView
 )
-from .controllers.GenerationViewController import GenerateMusicView, CheckGenerationStatusView
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
