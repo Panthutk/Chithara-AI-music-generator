@@ -10,9 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "postprocessing": "^6.39.1",
     "react": "^19.2.4",
     "react-bits": "^1.0.5",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
