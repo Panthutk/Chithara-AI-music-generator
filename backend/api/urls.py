@@ -9,7 +9,9 @@ from .views import (
     SharePermissionViewSet,
     EmailInvitationViewSet,
     GenerateMusicView,
-    CheckGenerationStatusView
+    CheckGenerationStatusView,
+    GoogleLoginView,
+    GoogleCallbackView
 )
 
 router = DefaultRouter()
@@ -25,4 +27,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('generate-music/', GenerateMusicView.as_view(), name='generate-music'),
     path('check-generation/', CheckGenerationStatusView.as_view(), name='check-generation'),
+    path('auth/google/', GoogleLoginView.as_view(), name='google-login'),
+    path('auth/google/callback/', GoogleCallbackView.as_view(), name='google-callback'),
 ]

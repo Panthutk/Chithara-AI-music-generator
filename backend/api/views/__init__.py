@@ -1,4 +1,4 @@
-from .auth_views import UserViewSet
+from .auth_views import UserViewSet, GoogleLoginView, GoogleCallbackView
 from .library_views import (
     MusicLibraryViewSet,
     MusicTrackViewSet,
@@ -22,4 +22,6 @@ __all__ = [
     'GenerateMusicView',
     'CheckGenerationStatusView',
     'GenerationRequestViewSet',
+    'GoogleLoginView',
+    'GoogleCallbackView',
 ]

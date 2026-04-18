@@ -3,8 +3,8 @@ import PixelBlast from '../components/PixelBlast';
 
 const LandingPage = () => {
   const handleGoogleLogin = () => {
-    // Redirect to Django Google OAuth endpoint or handle login
-    window.location.href = '/api/auth/google/'; // Adjust based on your backend routes
+    // Redirect to Django Google OAuth endpoint
+    window.location.href = 'http://localhost:8000/api/auth/google/'; 
   };
 
   return (
@@ -103,10 +103,10 @@ const LandingPage = () => {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div>
             <p className="text-gray-400 text-lg leading-relaxed mb-6">
-              Chithara AI Music Generator is a cutting-edge platform designed to empower creators, musicians, and everyday users to produce custom soundtracks. Derived from comprehensive requirements outlined in our platform's design, our system relies on state-of-the-art AI generation.
+              Making music shouldn't require decades of theory or an expensive studio. We built Chithara to bridge the gap between that sound in your head and the final track in your hands.
             </p>
             <p className="text-gray-400 text-lg leading-relaxed">
-              We focus entirely on transforming simple text prompts into fully orchestrated, high-quality audio tracks. Connect securely with your Google Account, and jump right into composing.
+              Whether you're a content creator looking for the perfect background score, or just someone feeling inspired, simply type what you want to hear. The AI handles the orchestration and mixing—you just focus on the vibe.
             </p>
           </div>
           <div className="h-64 rounded-2xl bg-gradient-to-br from-emerald-900/20 to-black border border-white/5 flex items-center justify-center p-8 relative overflow-hidden">
