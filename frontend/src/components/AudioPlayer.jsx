@@ -9,13 +9,20 @@ import RepeatIcon from '@mui/icons-material/Repeat';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ShareIcon from '@mui/icons-material/Share';
-const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev }) => {
+const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, onViewPrompt, onDelete }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = () => setShowDropdown(false);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (currentTrack && currentTrack.audio_url) {
@@ -117,8 +124,6 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev }) => {
           </div>
           {/* Quick Actions */}
           <div className="flex items-center gap-2 ml-4 text-gray-400">
-
-            <button className="p-1 hover:text-white transition-colors hidden md:block"><MoreVertIcon fontSize="small" /></button>
           </div>
         </div>
       </div>
@@ -159,6 +164,19 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev }) => {
       <div className="flex items-center justify-end gap-4 w-1/4 text-gray-400 min-w-[150px] hidden md:flex">
 
         <button className="p-1 hover:text-white transition-colors"><ShareIcon fontSize="small" /></button>
+        <div className="relative">
+          <button className="p-1 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); setShowDropdown(!showDropdown); }}>
+            <MoreVertIcon fontSize="small" />
+          </button>
+          {showDropdown && (
+            <div className="absolute right-0 bottom-full mb-4 w-48 bg-[#1a1a1a] rounded-lg shadow-xl border border-white/10 z-50 py-1 overflow-hidden">
+              <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); if(onRename) onRename(currentTrack); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">Rename title</button>
+              <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); if(onViewPrompt) onViewPrompt(currentTrack); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">View song prompt</button>
+              <div className="h-px bg-white/10 my-1"></div>
+              <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); if(onDelete) onDelete(currentTrack.trackId); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors">Delete song</button>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2 w-32 ml-4 group">
           <button onClick={toggleMute} className="hover:text-white transition-colors">
             {isMuted || volume === 0 ? <VolumeOffIcon fontSize="small" /> : <VolumeUpIcon fontSize="small" />}

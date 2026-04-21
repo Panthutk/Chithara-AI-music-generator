@@ -14,6 +14,7 @@ class MusicTrack(models.Model):
         AVAILABLE = 'AVAILABLE', 'Available'
         PROCESSING = 'PROCESSING', 'Processing'
         FAILED = 'FAILED', 'Failed'
+        HIDDEN = 'HIDDEN', 'Hidden'
 
     trackId = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255)

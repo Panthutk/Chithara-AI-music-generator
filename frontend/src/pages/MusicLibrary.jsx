@@ -22,6 +22,54 @@ const MusicLibrary = () => {
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
 
+  const [activeDropdownTrackId, setActiveDropdownTrackId] = useState(null);
+  const [editingTrack, setEditingTrack] = useState(null);
+  const [newTitle, setNewTitle] = useState('');
+  const [viewingPromptTrack, setViewingPromptTrack] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = () => setActiveDropdownTrackId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const handleDeleteTrack = async (trackId) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/tracks/${trackId}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'HIDDEN' })
+      });
+      if (res.ok) {
+        setTracks(prev => prev.filter(t => t.trackId !== trackId));
+        if (currentTrack?.trackId === trackId) setCurrentTrack(null);
+      }
+    } catch (e) {
+      console.error('Failed to hide track', e);
+    }
+  };
+
+  const handleRenameTrack = async () => {
+    if (!editingTrack || !newTitle.trim()) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/tracks/${editingTrack.trackId}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle.trim() })
+      });
+      if (res.ok) {
+        setTracks(prev => prev.map(t => t.trackId === editingTrack.trackId ? { ...t, title: newTitle.trim() } : t));
+        if (currentTrack?.trackId === editingTrack.trackId) {
+          setCurrentTrack(prev => ({ ...prev, title: newTitle.trim() }));
+        }
+        setEditingTrack(null);
+        setNewTitle('');
+      }
+    } catch (e) {
+      console.error('Failed to rename track', e);
+    }
+  };
+
   const handlePlayNext = () => {
     if (!currentTrack || tracks.length === 0) return;
     const availableTracks = tracks.filter(t => t.status === 'AVAILABLE');
@@ -239,9 +287,22 @@ const MusicLibrary = () => {
                               <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); /* handle share */ }}>
                                 <ShareIcon fontSize="small" />
                               </button>
-                              <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); /* handle more */ }}>
-                                <MoreVertIcon fontSize="small" />
-                              </button>
+                              <div className="relative">
+                                <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  setActiveDropdownTrackId(activeDropdownTrackId === track.trackId ? null : track.trackId);
+                                }}>
+                                  <MoreVertIcon fontSize="small" />
+                                </button>
+                                {activeDropdownTrackId === track.trackId && (
+                                  <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a1a] rounded-lg shadow-xl border border-white/10 z-50 py-1 overflow-hidden">
+                                    <button onClick={(e) => { e.stopPropagation(); setEditingTrack(track); setNewTitle(track.title); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">Rename title</button>
+                                    <button onClick={(e) => { e.stopPropagation(); setViewingPromptTrack(track); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">View song prompt</button>
+                                    <div className="h-px bg-white/10 my-1"></div>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteTrack(track.trackId); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors">Delete song</button>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <span className="w-10 text-right group-hover:hidden transition-all">3:05</span>
                           </div>
@@ -271,6 +332,44 @@ const MusicLibrary = () => {
           </div>
         </main>
       </div>
+
+      {/* Rename Modal */}
+      {editingTrack && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#141812] border border-[#1e261b] rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-4">Rename Track</h2>
+            <input 
+              type="text" 
+              value={newTitle} 
+              onChange={e => setNewTitle(e.target.value)}
+              className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors mb-6"
+              placeholder="Track title"
+              autoFocus
+            />
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setEditingTrack(null)} className="px-5 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Cancel</button>
+              <button onClick={handleRenameTrack} className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold rounded-xl transition-colors">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Prompt Modal */}
+      {viewingPromptTrack && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#141812] border border-[#1e261b] rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-4">Song Prompt</h2>
+            <div className="bg-[#0a0a0a] rounded-xl p-4 mb-6 border border-white/5 max-h-60 overflow-y-auto">
+              <p className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">
+                {viewingPromptTrack.prompt || "No prompt available for this track."}
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <button onClick={() => setViewingPromptTrack(null)} className="px-5 py-2 bg-white hover:bg-gray-200 text-black text-sm font-semibold rounded-xl transition-colors">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AudioPlayer
         currentTrack={currentTrack}

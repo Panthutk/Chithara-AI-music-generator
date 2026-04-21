@@ -19,6 +19,7 @@ class MusicLibrarySerializer(serializers.ModelSerializer):
 
 class MusicTrackSerializer(serializers.ModelSerializer):
     request_id = serializers.SerializerMethodField()
+    prompt = serializers.SerializerMethodField()
 
     class Meta:
         model = MusicTrack
@@ -27,6 +28,11 @@ class MusicTrackSerializer(serializers.ModelSerializer):
     def get_request_id(self, obj):
         if hasattr(obj, 'generation_request'):
             return obj.generation_request.requestId
+        return None
+
+    def get_prompt(self, obj):
+        if hasattr(obj, 'generation_request'):
+            return obj.generation_request.prompt
         return None
 
 class ListeningActivitySerializer(serializers.ModelSerializer):
