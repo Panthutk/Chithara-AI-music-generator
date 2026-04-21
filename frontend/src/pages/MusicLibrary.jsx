@@ -6,6 +6,7 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import SearchIcon from '@mui/icons-material/Search';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import StaggeredMenu from '../components/StaggeredMenu';
+import AudioPlayer from '../components/AudioPlayer';
 
 const MusicLibrary = () => {
   const [searchParams] = useSearchParams();
@@ -15,6 +16,25 @@ const MusicLibrary = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [tracks, setTracks] = useState([]);
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState(null);
+
+  const handlePlayNext = () => {
+    if (!currentTrack || tracks.length === 0) return;
+    const availableTracks = tracks.filter(t => t.status === 'AVAILABLE');
+    const currentIndex = availableTracks.findIndex(t => t.trackId === currentTrack.trackId);
+    if (currentIndex >= 0 && currentIndex < availableTracks.length - 1) {
+      setCurrentTrack(availableTracks[currentIndex + 1]);
+    }
+  };
+
+  const handlePlayPrev = () => {
+    if (!currentTrack || tracks.length === 0) return;
+    const availableTracks = tracks.filter(t => t.status === 'AVAILABLE');
+    const currentIndex = availableTracks.findIndex(t => t.trackId === currentTrack.trackId);
+    if (currentIndex > 0) {
+      setCurrentTrack(availableTracks[currentIndex - 1]);
+    }
+  };
 
   useEffect(() => {
     if (!user || activeTab !== 1) return;
@@ -166,7 +186,7 @@ const MusicLibrary = () => {
         </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0a0a0a] to-[#040604] p-8 md:p-12">
+      <main className={`flex-1 overflow-y-auto bg-gradient-to-br from-[#0a0a0a] to-[#040604] p-8 md:p-12 ${currentTrack ? 'pb-32' : ''}`}>
         <div className="max-w-4xl mx-auto">
           {isLoadingTracks ? (
             <div className="flex flex-col items-center justify-center py-24">
@@ -183,7 +203,7 @@ const MusicLibrary = () => {
               
               <div className="flex flex-col gap-2">
                 {tracks.map(track => (
-                  <div key={track.trackId} className="flex items-center justify-between p-3 pr-6 rounded-xl bg-[#141812] hover:bg-[#1f261c] transition-colors group cursor-pointer border border-[#1e261b]">
+                  <div key={track.trackId} onClick={() => track.status === 'AVAILABLE' && setCurrentTrack(track)} className="flex items-center justify-between p-3 pr-6 rounded-xl bg-[#141812] hover:bg-[#1f261c] transition-colors group cursor-pointer border border-[#1e261b]">
                     <div className="flex items-center gap-4">
                       <div className="w-[52px] h-[52px] bg-[#222] rounded overflow-hidden shrink-0 flex items-center justify-center">
                          {track.image_url ? (
@@ -206,9 +226,9 @@ const MusicLibrary = () => {
                       {track.status === 'AVAILABLE' ? (
                           <div className="flex items-center gap-4">
                              {track.audio_url && (
-                               <a href={track.audio_url} target="_blank" rel="noreferrer" className="opacity-0 group-hover:opacity-100 text-white hover:text-emerald-400 transition-all p-1" onClick={(e) => e.stopPropagation()}>
+                               <button className="opacity-0 group-hover:opacity-100 text-white hover:text-emerald-400 transition-all p-1" onClick={(e) => { e.stopPropagation(); setCurrentTrack(track); }}>
                                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                               </a>
+                               </button>
                              )}
                              <span>3:05</span>
                           </div>
@@ -238,6 +258,13 @@ const MusicLibrary = () => {
         </div>
       </main>
       </div>
+
+      <AudioPlayer 
+        currentTrack={currentTrack} 
+        tracks={tracks.filter(t => t.status === 'AVAILABLE')} 
+        onPlayNext={handlePlayNext} 
+        onPlayPrev={handlePlayPrev} 
+      />
     </div>
   );
 };
