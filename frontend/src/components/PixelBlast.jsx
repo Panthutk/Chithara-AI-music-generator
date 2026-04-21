@@ -411,7 +411,7 @@ const PixelBlast = ({
         renderer.setSize(w, h, false);
         uniforms.uResolution.value.set(renderer.domElement.width, renderer.domElement.height);
         if (threeRef.current?.composer)
-          threeRef.current.composer.setSize(renderer.domElement.width, renderer.domElement.height);
+          threeRef.current.composer.setSize(w, h);
         uniforms.uPixelSize.value = pixelSize * renderer.getPixelRatio();
       };
       setSize();
@@ -463,7 +463,11 @@ const PixelBlast = ({
         if (composer && composer.passes.length > 0) composer.passes.forEach(p => (p.renderToScreen = false));
         composer.addPass(noisePass);
       }
-      if (composer) composer.setSize(renderer.domElement.width, renderer.domElement.height);
+      if (composer) {
+        const cw = container.clientWidth || 1;
+        const ch = container.clientHeight || 1;
+        composer.setSize(cw, ch);
+      }
       const mapToPixels = e => {
         const rect = renderer.domElement.getBoundingClientRect();
         const scaleX = renderer.domElement.width / rect.width;
