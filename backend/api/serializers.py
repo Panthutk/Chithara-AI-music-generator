@@ -18,9 +18,16 @@ class MusicLibrarySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class MusicTrackSerializer(serializers.ModelSerializer):
+    request_id = serializers.SerializerMethodField()
+
     class Meta:
         model = MusicTrack
         fields = '__all__'
+
+    def get_request_id(self, obj):
+        if hasattr(obj, 'generation_request'):
+            return obj.generation_request.requestId
+        return None
 
 class ListeningActivitySerializer(serializers.ModelSerializer):
     class Meta:

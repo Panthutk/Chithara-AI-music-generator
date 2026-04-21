@@ -10,6 +10,10 @@ class GenerationRequest(models.Model):
 
     requestId = models.AutoField(primary_key=True)
     prompt = models.TextField()
+    title = models.CharField(max_length=255, null=True, blank=True)
+    style = models.CharField(max_length=255, null=True, blank=True)
+    negativeTags = models.CharField(max_length=255, null=True, blank=True)
+    vocalGender = models.CharField(max_length=10, null=True, blank=True)
     status = models.CharField(
         max_length=50, choices=Status.choices, default=Status.QUEUED)
     createdAt = models.DateTimeField(auto_now_add=True)

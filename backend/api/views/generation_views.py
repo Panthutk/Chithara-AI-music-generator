@@ -37,10 +37,16 @@ class GenerateMusicView(APIView):
         prompt = request.data.get('prompt', 'A calm and relaxing piano track')
         title = request.data.get('title', 'Generated Track')
         style = request.data.get('style', 'Classical')
+        negative = request.data.get('negative', 'none')
+        vocal_gender = request.data.get('vocalGender', 'm')
         
         # Create a generation request record
         gen_request = GenerationRequest.objects.create(
             prompt=prompt,
+            title=title,
+            style=style,
+            negativeTags=negative,
+            vocalGender=vocal_gender,
             status=GenerationRequest.Status.QUEUED,
             user=user
         )
@@ -77,8 +83,8 @@ class GenerateMusicView(APIView):
             "title": title,
             "personaId": "persona_123",
             "personaModel": "style_persona",
-            "negativeTags": "Heavy Metal, Upbeat Drums",
-            "vocalGender": "m",
+            "negativeTags": negative,
+            "vocalGender": vocal_gender,
             "styleWeight": 0.65,
             "weirdnessConstraint": 0.65,
             "audioWeight": 0.65

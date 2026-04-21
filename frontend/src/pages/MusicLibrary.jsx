@@ -13,6 +13,56 @@ const MusicLibrary = () => {
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState(1);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [tracks, setTracks] = useState([]);
+  const [isLoadingTracks, setIsLoadingTracks] = useState(false);
+
+  useEffect(() => {
+    if (!user || activeTab !== 1) return;
+    
+    let isMounted = true;
+
+    const fetchTracks = async (showLoading = true) => {
+      if (showLoading) setIsLoadingTracks(true);
+      try {
+        const userId = user.userId;
+        const res = await fetch(`http://localhost:8000/api/tracks/?user=${userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setTracks(data.results || data || []);
+        }
+      } catch (e) {
+        console.error("Failed to fetch tracks", e);
+      } finally {
+        if (isMounted) setIsLoadingTracks(false);
+      }
+    };
+    
+    fetchTracks(true);
+
+    const interval = setInterval(() => {
+       setTracks(currentTracks => {
+          const processing = currentTracks.filter(t => t.status === 'PROCESSING' && t.request_id);
+          if (processing.length > 0) {
+             processing.forEach(t => {
+                 fetch(`http://localhost:8000/api/check-generation/?request_id=${t.request_id}`)
+                   .then(res => res.json())
+                   .then(data => {
+                       if (data.status === 'SUCCESS' || data.status === 'FAILED') {
+                           fetchTracks(false);
+                       }
+                   })
+                   .catch(console.error);
+             });
+          }
+          return currentTracks;
+       });
+    }, 5000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [user, activeTab]);
 
   useEffect(() => {
     let token = searchParams.get('token');
@@ -89,7 +139,7 @@ const MusicLibrary = () => {
               />
            </div>
            
-           <button className="ml-4 px-5 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-gray-200 transition-colors shrink-0 hidden md:block">
+           <button onClick={() => navigate('/generate')} className="ml-4 px-5 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-gray-200 transition-colors shrink-0 hidden md:block">
              Generate Track
            </button>
         </div>
@@ -116,8 +166,76 @@ const MusicLibrary = () => {
         </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0a0a0a] to-[#050505] p-8 md:p-12">
-        {/* Content goes here */}
+      <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0a0a0a] to-[#040604] p-8 md:p-12">
+        <div className="max-w-4xl mx-auto">
+          {isLoadingTracks ? (
+            <div className="flex flex-col items-center justify-center py-24">
+              <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : tracks.length > 0 ? (
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-4 px-2">
+                <div className="flex items-center text-gray-400 text-sm font-medium hover:text-white cursor-pointer transition-colors">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
+                  Sort
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                {tracks.map(track => (
+                  <div key={track.trackId} className="flex items-center justify-between p-3 pr-6 rounded-xl bg-[#141812] hover:bg-[#1f261c] transition-colors group cursor-pointer border border-[#1e261b]">
+                    <div className="flex items-center gap-4">
+                      <div className="w-[52px] h-[52px] bg-[#222] rounded overflow-hidden shrink-0 flex items-center justify-center">
+                         {track.image_url ? (
+                            <img src={track.image_url} alt={track.title} className="w-full h-full object-cover" />
+                         ) : (
+                            <span className="text-gray-500 text-xl">🎵</span>
+                         )}
+                      </div>
+                      <div className="flex flex-col justify-center">
+                         <h4 className="font-bold text-gray-100 text-[15px] leading-tight mb-1">
+                           {track.title || "Untitled Track"}
+                         </h4>
+                         <p className="text-[#8c918a] text-[13px] leading-none">
+                           {user.name} · {track.genre || "Unknown"}
+                         </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-[#8c918a] text-sm">
+                      {track.status === 'AVAILABLE' ? (
+                          <div className="flex items-center gap-4">
+                             {track.audio_url && (
+                               <a href={track.audio_url} target="_blank" rel="noreferrer" className="opacity-0 group-hover:opacity-100 text-white hover:text-emerald-400 transition-all p-1" onClick={(e) => e.stopPropagation()}>
+                                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                               </a>
+                             )}
+                             <span>3:05</span>
+                          </div>
+                      ) : (
+                          <span className={`${track.status === 'FAILED' ? 'text-red-400' : 'text-emerald-500 animate-pulse'} text-xs font-bold uppercase tracking-wider`}>
+                             {track.status}
+                          </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 border border-dashed border-white/10 rounded-2xl bg-white/[0.02] mt-10">
+              <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+              </div>
+              <p className="text-lg font-medium text-gray-300 mb-2">No tracks generated yet</p>
+              <button onClick={() => navigate('/generate')} className="mt-4 px-6 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-colors">
+                Generate Track
+              </button>
+            </div>
+          )}
+        </div>
       </main>
       </div>
     </div>
