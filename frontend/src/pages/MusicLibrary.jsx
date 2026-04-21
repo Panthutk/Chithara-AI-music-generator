@@ -7,6 +7,10 @@ import SearchIcon from '@mui/icons-material/Search';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import StaggeredMenu from '../components/StaggeredMenu';
 import AudioPlayer from '../components/AudioPlayer';
+import ShareIcon from '@mui/icons-material/Share';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 
 const MusicLibrary = () => {
   const [searchParams] = useSearchParams();
@@ -202,7 +206,16 @@ const MusicLibrary = () => {
                   {tracks.map(track => (
                     <div key={track.trackId} onClick={() => track.status === 'AVAILABLE' && setCurrentTrack(track)} className="flex items-center justify-between p-3 pr-6 rounded-xl bg-[#141812] hover:bg-[#1f261c] transition-colors group cursor-pointer border border-[#1e261b]">
                       <div className="flex items-center gap-4">
-                        <div className="w-[52px] h-[52px] bg-[#222] rounded overflow-hidden shrink-0 flex items-center justify-center">
+                        <div className="relative w-[52px] h-[52px] bg-[#222] rounded overflow-hidden shrink-0 flex items-center justify-center">
+                          <div className={`absolute inset-0 z-10 flex items-center justify-center transition-opacity ${currentTrack?.trackId === track.trackId ? 'bg-black/40' : 'bg-black/40 opacity-0 group-hover:opacity-100'}`}>
+                            <div className="w-[36px] h-[36px] rounded-full bg-[#a3b899] flex items-center justify-center shadow-md">
+                              {currentTrack?.trackId === track.trackId ? (
+                                <VolumeUpIcon className="text-black" fontSize="small" />
+                              ) : (
+                                <PlayArrowIcon className="text-black" fontSize="small" />
+                              )}
+                            </div>
+                          </div>
                           {track.image_url ? (
                             <img src={track.image_url} alt={track.title} className="w-full h-full object-cover" />
                           ) : (
@@ -222,12 +235,15 @@ const MusicLibrary = () => {
                       <div className="flex items-center gap-4 text-[#8c918a] text-sm">
                         {track.status === 'AVAILABLE' ? (
                           <div className="flex items-center gap-4">
-                            {track.audio_url && (
-                              <button className="opacity-0 group-hover:opacity-100 text-white hover:text-emerald-400 transition-all p-1" onClick={(e) => { e.stopPropagation(); setCurrentTrack(track); }}>
-                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); /* handle share */ }}>
+                                <ShareIcon fontSize="small" />
                               </button>
-                            )}
-                            <span>3:05</span>
+                              <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); /* handle more */ }}>
+                                <MoreVertIcon fontSize="small" />
+                              </button>
+                            </div>
+                            <span className="w-10 text-right group-hover:hidden transition-all">3:05</span>
                           </div>
                         ) : (
                           <span className={`${track.status === 'FAILED' ? 'text-red-400' : 'text-emerald-500 animate-pulse'} text-xs font-bold uppercase tracking-wider`}>
