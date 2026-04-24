@@ -27,6 +27,14 @@ const MusicLibrary = () => {
   const [newTitle, setNewTitle] = useState('');
   const [viewingPromptTrack, setViewingPromptTrack] = useState(null);
 
+  const [invites, setInvites] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationSearch, setNotificationSearch] = useState('');
+  const [shareModalTrack, setShareModalTrack] = useState(null);
+  const [shareMode, setShareMode] = useState('PRIVATE');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+
   useEffect(() => {
     const handleClickOutside = () => setActiveDropdownTrackId(null);
     document.addEventListener('click', handleClickOutside);
@@ -46,6 +54,20 @@ const MusicLibrary = () => {
       }
     } catch (e) {
       console.error('Failed to hide track', e);
+    }
+  };
+
+  const handleRemoveSharedTrack = async (trackId) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/tracks/${trackId}/shared/?user_id=${user.userId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setTracks(prev => prev.filter(t => t.trackId !== trackId));
+        if (currentTrack?.trackId === trackId) setCurrentTrack(null);
+      }
+    } catch (e) {
+      console.error('Failed to remove shared track', e);
     }
   };
 
@@ -70,6 +92,56 @@ const MusicLibrary = () => {
     }
   };
 
+  const handleRespondInvite = async (inviteId, status) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/invites/${inviteId}/respond/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: user.userId, status })
+      });
+      if (res.ok) {
+        setInvites(prev => prev.filter(i => i.inviteId !== inviteId));
+        if (status === 'ACCEPTED' && activeTab === 2) {
+          // Re-fetch tracks by toggling tab slightly or rely on auto-poll if we add it
+          const fetchRes = await fetch(`http://localhost:8000/api/tracks/shared/?user_id=${user.userId}`);
+          if (fetchRes.ok) setTracks(await fetchRes.json());
+        }
+      }
+    } catch (e) { console.error('Failed to respond to invite', e); }
+  };
+
+  const handleShareSubmit = async () => {
+    if (!shareModalTrack) return;
+    setIsSendingInvite(true);
+    try {
+      const payload = { user_id: user.userId };
+      if (shareMode === 'INVITE') {
+        payload.invite_email = inviteEmail;
+      } else {
+        payload.visibility = shareMode;
+      }
+      const res = await fetch(`http://localhost:8000/api/tracks/${shareModalTrack.trackId}/share/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        if (shareMode !== 'INVITE') {
+          setTracks(prev => prev.map(t => t.trackId === shareModalTrack.trackId ? { ...t, visibility: shareMode } : t));
+        }
+        setShareModalTrack(null);
+        setInviteEmail('');
+      } else {
+        const errorData = await res.json();
+        alert(errorData.error || 'Failed to share track');
+      }
+    } catch (e) { 
+      console.error('Failed to share track', e); 
+      alert('An unexpected error occurred.');
+    }
+    finally { setIsSendingInvite(false); }
+  };
+
   const handlePlayNext = () => {
     if (!currentTrack || tracks.length === 0) return;
     const availableTracks = tracks.filter(t => t.status === 'AVAILABLE');
@@ -89,7 +161,7 @@ const MusicLibrary = () => {
   };
 
   useEffect(() => {
-    if (!user || activeTab !== 1) return;
+    if (!user || (activeTab !== 1 && activeTab !== 2)) return;
 
     let isMounted = true;
 
@@ -97,7 +169,10 @@ const MusicLibrary = () => {
       if (showLoading) setIsLoadingTracks(true);
       try {
         const userId = user.userId;
-        const res = await fetch(`http://localhost:8000/api/tracks/?user=${userId}`);
+        const endpoint = activeTab === 2 
+          ? `http://localhost:8000/api/tracks/shared/?user_id=${userId}`
+          : `http://localhost:8000/api/tracks/?user=${userId}`;
+        const res = await fetch(endpoint);
         if (res.ok) {
           const data = await res.json();
           if (isMounted) setTracks(data.results || data || []);
@@ -135,6 +210,22 @@ const MusicLibrary = () => {
       clearInterval(interval);
     };
   }, [user, activeTab]);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchInvites = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/invites/pending/?user_id=${user.userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setInvites(data);
+        }
+      } catch (e) { console.error('Failed to fetch invites', e); }
+    };
+    fetchInvites();
+    const int = setInterval(fetchInvites, 10000);
+    return () => clearInterval(int);
+  }, [user]);
 
   useEffect(() => {
     let token = searchParams.get('token');
@@ -215,8 +306,16 @@ const MusicLibrary = () => {
 
         {/* Right Actions */}
         <div className="flex items-center justify-end gap-3 w-1/4">
-          <button className="p-2 hover:bg-white/10 rounded-full hidden sm:block">
+          <button 
+            onClick={() => setShowNotifications(true)} 
+            className="p-2 hover:bg-white/10 rounded-full hidden sm:block relative"
+          >
             <NotificationsIcon className="w-5 h-5 text-gray-200" />
+            {invites.length > 0 && (
+              <span className="absolute top-1 right-1.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                {invites.length}
+              </span>
+            )}
           </button>
 
           <div className="w-8 h-8 ml-2 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-300 flex items-center justify-center text-xs font-bold text-black uppercase cursor-pointer shadow-lg">
@@ -283,10 +382,21 @@ const MusicLibrary = () => {
                       <div className="flex items-center gap-4 text-[#8c918a] text-sm">
                         {track.status === 'AVAILABLE' ? (
                           <div className="flex items-center gap-4">
+                            {activeTab !== 2 && (
+                              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button 
+                                  className="p-2 text-gray-400 hover:text-white transition-colors" 
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setShareModalTrack(track); 
+                                    setShareMode(track.visibility || 'PRIVATE'); 
+                                  }}
+                                >
+                                  <ShareIcon fontSize="small" />
+                                </button>
+                              </div>
+                            )}
                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); /* handle share */ }}>
-                                <ShareIcon fontSize="small" />
-                              </button>
                               <div className="relative">
                                 <button className="p-2 text-gray-400 hover:text-white transition-colors" onClick={(e) => { 
                                   e.stopPropagation(); 
@@ -296,10 +406,16 @@ const MusicLibrary = () => {
                                 </button>
                                 {activeDropdownTrackId === track.trackId && (
                                   <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a1a] rounded-lg shadow-xl border border-white/10 z-50 py-1 overflow-hidden">
-                                    <button onClick={(e) => { e.stopPropagation(); setEditingTrack(track); setNewTitle(track.title); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">Rename title</button>
+                                    {activeTab !== 2 && (
+                                      <button onClick={(e) => { e.stopPropagation(); setEditingTrack(track); setNewTitle(track.title); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">Rename title</button>
+                                    )}
                                     <button onClick={(e) => { e.stopPropagation(); setViewingPromptTrack(track); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">View song prompt</button>
                                     <div className="h-px bg-white/10 my-1"></div>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteTrack(track.trackId); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors">Delete song</button>
+                                    {activeTab === 2 ? (
+                                      <button onClick={(e) => { e.stopPropagation(); handleRemoveSharedTrack(track.trackId); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors">Remove from Shared</button>
+                                    ) : (
+                                      <button onClick={(e) => { e.stopPropagation(); handleDeleteTrack(track.trackId); setActiveDropdownTrackId(null); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors">Delete song</button>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -366,6 +482,129 @@ const MusicLibrary = () => {
             </div>
             <div className="flex justify-end">
               <button onClick={() => setViewingPromptTrack(null)} className="px-5 py-2 bg-white hover:bg-gray-200 text-black text-sm font-semibold rounded-xl transition-colors">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {shareModalTrack && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#141812] border border-[#1e261b] rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-2">Share "{shareModalTrack.title}"</h2>
+            <p className="text-sm text-gray-400 mb-6">Choose who can listen to this track.</p>
+            
+            <div className="flex flex-col gap-3 mb-6">
+              <label className={`flex items-center p-4 rounded-xl border cursor-pointer transition-colors ${shareMode === 'PUBLIC' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 hover:border-white/30'}`}>
+                <input type="radio" name="shareMode" value="PUBLIC" checked={shareMode === 'PUBLIC'} onChange={() => setShareMode('PUBLIC')} className="hidden" />
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${shareMode === 'PUBLIC' ? 'border-emerald-500' : 'border-gray-500'}`}>
+                  {shareMode === 'PUBLIC' && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
+                </div>
+                <div>
+                  <div className="font-semibold text-white text-sm">Public</div>
+                  <div className="text-xs text-gray-400 mt-0.5">Anyone with the link can listen</div>
+                </div>
+              </label>
+
+              <label className={`flex items-center p-4 rounded-xl border cursor-pointer transition-colors ${shareMode === 'PRIVATE' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 hover:border-white/30'}`}>
+                <input type="radio" name="shareMode" value="PRIVATE" checked={shareMode === 'PRIVATE'} onChange={() => setShareMode('PRIVATE')} className="hidden" />
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${shareMode === 'PRIVATE' ? 'border-emerald-500' : 'border-gray-500'}`}>
+                  {shareMode === 'PRIVATE' && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
+                </div>
+                <div>
+                  <div className="font-semibold text-white text-sm">Private</div>
+                  <div className="text-xs text-gray-400 mt-0.5">Only you can listen</div>
+                </div>
+              </label>
+
+              <label className={`flex items-center p-4 rounded-xl border cursor-pointer transition-colors ${shareMode === 'INVITE' ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/10 hover:border-white/30'}`}>
+                <input type="radio" name="shareMode" value="INVITE" checked={shareMode === 'INVITE'} onChange={() => setShareMode('INVITE')} className="hidden" />
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center mr-3 ${shareMode === 'INVITE' ? 'border-emerald-500' : 'border-gray-500'}`}>
+                  {shareMode === 'INVITE' && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
+                </div>
+                <div>
+                  <div className="font-semibold text-white text-sm">Invite via Email</div>
+                  <div className="text-xs text-gray-400 mt-0.5">Send a notification to a specific user</div>
+                </div>
+              </label>
+            </div>
+
+            {shareMode === 'INVITE' && (
+              <div className="mb-6">
+                <input 
+                  type="email" 
+                  value={inviteEmail} 
+                  onChange={e => setInviteEmail(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                  placeholder="user@example.com"
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-8">
+              <button onClick={() => setShareModalTrack(null)} className="px-5 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Cancel</button>
+              <button 
+                onClick={handleShareSubmit} 
+                disabled={isSendingInvite || (shareMode === 'INVITE' && !inviteEmail.trim())}
+                className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSendingInvite ? 'Processing...' : (shareMode === 'INVITE' ? 'Send Invite' : 'Save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Modal */}
+      {showNotifications && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-[#141812] border border-[#1e261b] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[80vh]">
+            <div className="p-6 border-b border-white/10">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white">Notifications</h2>
+                <button onClick={() => setShowNotifications(false)} className="text-gray-400 hover:text-white transition-colors">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <SearchIcon className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search by inviter name..."
+                  value={notificationSearch}
+                  onChange={e => setNotificationSearch(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl py-2.5 pl-11 pr-4 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
+                />
+              </div>
+            </div>
+            
+            <div className="overflow-y-auto p-4 flex-1">
+              {invites.filter(invite => 
+                (invite.inviter_name || '').toLowerCase().includes(notificationSearch.toLowerCase())
+              ).length === 0 ? (
+                <div className="py-12 text-center text-gray-400 text-sm flex flex-col items-center">
+                  <NotificationsIcon className="w-12 h-12 text-white/10 mb-3" />
+                  {invites.length === 0 ? 'No new notifications' : 'No invites match your search'}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {invites.filter(invite => 
+                    (invite.inviter_name || '').toLowerCase().includes(notificationSearch.toLowerCase())
+                  ).map(invite => (
+                    <div key={invite.inviteId} className="p-4 bg-[#1a1a1a] rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                      <p className="text-sm text-gray-300 mb-4">
+                        <span className="font-bold text-white">{invite.inviter_name || 'Someone'}</span> invited you to listen to <span className="font-bold text-emerald-400">{invite.track_title || 'a track'}</span>.
+                      </p>
+                      <div className="flex gap-3">
+                        <button onClick={() => handleRespondInvite(invite.inviteId, 'ACCEPTED')} className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black text-sm font-semibold py-2 rounded-xl transition-colors">Accept</button>
+                        <button onClick={() => handleRespondInvite(invite.inviteId, 'REJECTED')} className="flex-1 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold py-2 rounded-xl transition-colors">Ignore</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

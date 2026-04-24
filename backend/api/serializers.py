@@ -4,8 +4,7 @@ from .models.music_library import MusicLibrary
 from .models.music_track import MusicTrack
 from .models.listening_activity import ListeningActivity
 from .models.generation_request import GenerationRequest
-from .models.share_permission import SharePermission
-from .models.email_invitation import EmailInvitation
+from .models.track_invite import TrackInvite
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,13 +44,11 @@ class GenerationRequestSerializer(serializers.ModelSerializer):
         model = GenerationRequest
         fields = '__all__'
 
-class SharePermissionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SharePermission
-        fields = '__all__'
+class TrackInviteSerializer(serializers.ModelSerializer):
+    inviter_name = serializers.CharField(source='inviter.name', read_only=True)
+    track_title = serializers.CharField(source='track.title', read_only=True)
 
-class EmailInvitationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = EmailInvitation
+        model = TrackInvite
         fields = '__all__'
-        read_only_fields = ['sentAt']
+        read_only_fields = ['status']

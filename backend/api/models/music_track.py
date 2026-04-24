@@ -16,6 +16,10 @@ class MusicTrack(models.Model):
         FAILED = 'FAILED', 'Failed'
         HIDDEN = 'HIDDEN', 'Hidden'
 
+    class Visibility(models.TextChoices):
+        PRIVATE = 'PRIVATE', 'Private'
+        PUBLIC = 'PUBLIC', 'Public'
+
     trackId = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255)
     duration = models.IntegerField(
@@ -25,6 +29,8 @@ class MusicTrack(models.Model):
     occasion = models.CharField(max_length=100)
     status = models.CharField(
         max_length=50, choices=Status.choices, default=Status.PROCESSING)
+    visibility = models.CharField(
+        max_length=50, choices=Visibility.choices, default=Visibility.PRIVATE)
     audio_url = models.URLField(max_length=1000, null=True, blank=True)
     image_url = models.URLField(max_length=1000, null=True, blank=True)
 

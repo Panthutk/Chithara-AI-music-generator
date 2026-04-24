@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, MusicLibrary, MusicTrack, GenerationRequest, SharePermission, EmailInvitation, ListeningActivity
+from .models import User, MusicLibrary, MusicTrack, GenerationRequest, TrackInvite, ListeningActivity
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -21,14 +21,9 @@ class GenerationRequestAdmin(admin.ModelAdmin):
     list_display = ('requestId', 'user', 'status', 'createdAt')
     list_filter = ('status',)
 
-@admin.register(SharePermission)
-class SharePermissionAdmin(admin.ModelAdmin):
-    list_display = ('permissionId', 'track', 'accessLevel', 'createdAt')
-
-@admin.register(EmailInvitation)
-class EmailInvitationAdmin(admin.ModelAdmin):
-    list_display = ('invitationId', 'email', 'status', 'sentAt')
-    list_filter = ('status',)
+@admin.register(TrackInvite)
+class TrackInviteAdmin(admin.ModelAdmin):
+    list_display = ('inviteId', 'track', 'invitee_email', 'status', 'created_at')
 
 @admin.register(ListeningActivity)
 class ListeningActivityAdmin(admin.ModelAdmin):

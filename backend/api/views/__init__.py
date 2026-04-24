@@ -2,9 +2,14 @@ from .auth_views import UserViewSet, GoogleLoginView, GoogleCallbackView
 from .library_views import (
     MusicLibraryViewSet,
     MusicTrackViewSet,
-    ListeningActivityViewSet,
-    SharePermissionViewSet,
-    EmailInvitationViewSet
+    ListeningActivityViewSet
+)
+from .share_views import (
+    ShareTrackView,
+    PendingInvitesView,
+    RespondInviteView,
+    SharedLibraryView,
+    RemoveSharedTrackView
 )
 from .generation_views import (
     GenerateMusicView,
@@ -17,11 +22,14 @@ __all__ = [
     'MusicLibraryViewSet',
     'MusicTrackViewSet',
     'ListeningActivityViewSet',
-    'SharePermissionViewSet',
-    'EmailInvitationViewSet',
     'GenerateMusicView',
     'CheckGenerationStatusView',
     'GenerationRequestViewSet',
     'GoogleLoginView',
     'GoogleCallbackView',
+    'ShareTrackView',
+    'PendingInvitesView',
+    'RespondInviteView',
+    'SharedLibraryView',
+    'RemoveSharedTrackView',
 ]
