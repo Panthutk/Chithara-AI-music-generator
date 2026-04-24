@@ -10,6 +10,7 @@ This project is part of 0129243-65 Principle of Software Design
 - **Personal Music Library**: A dynamic interface to view, search, and sort generated tracks with high-fidelity UI components.
 - **Custom Audio Player**: Feature-rich web audio player supporting background playback, volume control, skipping, track shuffling, and looping.
 - **Security & Quotas**: Backend API rate limiting restricts generation to 30 tracks per user over a rolling 7-day period to prevent abuse.
+- **Live Quota Tracking & Alerts**: The UI tracks your remaining generation coins in real-time and gracefully displays custom bottom-right toast notifications if you run out of credits (bypassing ugly browser alerts).
 - **Track Management**: Rename or completely remove tracks from your personal or shared library.
 
 ## Setup Instructions
