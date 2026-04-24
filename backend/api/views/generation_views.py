@@ -72,21 +72,20 @@ class GenerateMusicView(APIView):
         url = "https://api.sunoapi.org/api/v1/generate"
         payload = {
             "customMode": True,
-            "instrumental": True,
+            "instrumental": vocal_gender == 'none',
             "model": "V4_5ALL",
-            # Placeholder for callback URL since frontend uses a loading bar/polling instead
             "callBackUrl": "https://api.example.com/callback",
             "prompt": prompt,
             "style": style,
             "title": title,
-            "personaId": "persona_123",
-            "personaModel": "style_persona",
             "negativeTags": negative,
-            "vocalGender": vocal_gender,
             "styleWeight": 0.65,
             "weirdnessConstraint": 0.65,
             "audioWeight": 0.65
         }
+        
+        if vocal_gender != 'none':
+            payload["vocalGender"] = vocal_gender
         
         headers = {
             "Authorization": f"Bearer {api_key}",

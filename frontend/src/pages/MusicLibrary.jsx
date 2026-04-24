@@ -586,6 +586,29 @@ const MusicLibrary = () => {
               </div>
             )}
 
+            {shareMode === 'PUBLIC' && (
+              <div className="mb-6 p-4 rounded-xl bg-[#0a0a0a] border border-white/5">
+                <p className="text-xs text-gray-400 mb-2">Public Link</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={`${window.location.origin}/track/${shareModalTrack.trackId}`}
+                    className="w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/track/${shareModalTrack.trackId}`);
+                      alert('Link copied to clipboard!');
+                    }}
+                    className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-end gap-3 mt-8">
               <button onClick={() => setShareModalTrack(null)} className="px-5 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">Cancel</button>
               <button 

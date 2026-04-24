@@ -137,7 +137,7 @@ const GenerationPage = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-300 mb-2">Vocal Gender</label>
-                <div className="grid grid-cols-2 gap-3 h-[50px]">
+                <div className="grid grid-cols-3 gap-3 h-[50px]">
                   <button
                     type="button"
                     onClick={() => setVocalGender('m')}
@@ -159,6 +159,17 @@ const GenerationPage = () => {
                     }`}
                   >
                     Female
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVocalGender('none')}
+                    className={`rounded-xl border flex items-center justify-center text-sm font-semibold transition-colors ${
+                      vocalGender === 'none' 
+                        ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' 
+                        : 'bg-[#1a1a1a] border-white/10 text-gray-400 hover:border-white/20'
+                    }`}
+                  >
+                    No Singer
                   </button>
                 </div>
               </div>

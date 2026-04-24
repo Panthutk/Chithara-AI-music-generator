@@ -18,6 +18,7 @@ class MusicLibrarySerializer(serializers.ModelSerializer):
 class MusicTrackSerializer(serializers.ModelSerializer):
     request_id = serializers.SerializerMethodField()
     prompt = serializers.SerializerMethodField()
+    user_name = serializers.CharField(source='user.name', read_only=True)
 
     class Meta:
         model = MusicTrack

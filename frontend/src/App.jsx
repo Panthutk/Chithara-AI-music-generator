@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import MusicLibrary from './pages/MusicLibrary';
 import GenerationPage from './pages/GenerationPage';
+import SharedTrackPage from './pages/SharedTrackPage';
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/library" element={<MusicLibrary />} />
         <Route path="/generate" element={<GenerationPage />} />
+        <Route path="/track/:trackId" element={<SharedTrackPage />} />
       </Routes>
     </Router>
   );
