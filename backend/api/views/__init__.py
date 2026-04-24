@@ -14,7 +14,8 @@ from .share_views import (
 from .generation_views import (
     GenerateMusicView,
     CheckGenerationStatusView,
-    GenerationRequestViewSet
+    GenerationRequestViewSet,
+    UserQuotaView
 )
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     'GenerateMusicView',
     'CheckGenerationStatusView',
     'GenerationRequestViewSet',
+    'UserQuotaView',
     'GoogleLoginView',
     'GoogleCallbackView',
     'VerifySessionView',

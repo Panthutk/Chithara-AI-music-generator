@@ -22,6 +22,7 @@ const MusicLibrary = () => {
   const [tracks, setTracks] = useState([]);
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
+  const [quota, setQuota] = useState(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -219,6 +220,17 @@ const MusicLibrary = () => {
       } finally {
         if (isMounted) setIsLoadingTracks(false);
       }
+
+      // Fetch quota
+      try {
+        const quotaRes = await fetch(`http://localhost:8000/api/user-quota/?user_id=${user.userId}`);
+        if (quotaRes.ok) {
+          const quotaData = await quotaRes.json();
+          if (isMounted) setQuota(quotaData);
+        }
+      } catch (e) {
+        console.error("Failed to fetch quota", e);
+      }
     };
 
     fetchTracks(true);
@@ -408,9 +420,17 @@ const MusicLibrary = () => {
             />
           </div>
 
-          <button onClick={() => navigate('/generate')} className="ml-4 px-5 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-gray-200 transition-colors shrink-0 hidden md:block">
-            Generate Track
-          </button>
+          <div className="flex items-center gap-3 shrink-0 hidden md:flex ml-4">
+            {quota && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-xs font-bold tracking-wide">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                {quota.remaining} Coins
+              </div>
+            )}
+            <button onClick={() => navigate('/generate')} className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-gray-200 transition-colors">
+              Generate Track
+            </button>
+          </div>
         </div>
 
         {/* Right Actions */}

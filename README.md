@@ -2,6 +2,16 @@
 
 This project is part of 0129243-65 Principle of Software Design
 
+## Key Features
+
+- **Google OAuth 2.0 Authentication**: Secure login flow with single-session enforcement via JWT and database tracking.
+- **AI Music Generation**: Users can request custom tracks by specifying prompts, genres, and vocal styles. Requests are managed via a backend queue.
+- **Preview & Confirmation**: A pre-generation modal to review track details before starting the AI engine.
+- **Personal Music Library**: A dynamic interface to view, search, and sort generated tracks with high-fidelity UI components.
+- **Custom Audio Player**: Feature-rich web audio player supporting background playback, volume control, skipping, track shuffling, and looping.
+- **Security & Quotas**: Backend API rate limiting restricts generation to 30 tracks per user over a rolling 7-day period to prevent abuse.
+- **Track Management**: Rename or completely remove tracks from your personal or shared library.
+
 ## Setup Instructions
 
 ### 1. Clone the Repository
@@ -99,81 +109,64 @@ http://127.0.0.1:8000/api/email-invitations/
 
 ## Database Structure
 
-The following tables describe the models used in the API.
+The following tables describe the actual models used in the API.
 
 ### User
 
-| Field | Type | Attributes | Description |
-| --- | --- | --- | --- |
-| `userId` | AutoField | Primary Key | Unique identifier for the user. |
-| `name` | CharField(255) | | Name of the user. |
-| `email` | EmailField | Unique | Email address of the user. |
-| `role` | CharField(50) | | Role of the user in the system. |
+| Field             | Type           | Attributes  | Description                             |
+| ----------------- | -------------- | ----------- | --------------------------------------- |
+| `userId`        | AutoField      | Primary Key | Unique identifier for the user.         |
+| `name`          | CharField(255) |             | Name of the user.                       |
+| `email`         | EmailField     | Unique      | Email address of the user.              |
+| `role`          | CharField(50)  |             | Role of the user in the system.         |
+| `session_token` | CharField(255) | Null/Blank  | UUID tracking the active login session. |
 
 ### MusicLibrary
 
-| Field | Type | Attributes | Description |
-| --- | --- | --- | --- |
-| `libraryId` | AutoField | Primary Key | Unique identifier for the library. |
-| `user` | OneToOneField | Cascade | Foreign key referring to `User`. |
+| Field         | Type          | Attributes   | Description                            |
+| ------------- | ------------- | ------------ | -------------------------------------- |
+| `libraryId` | AutoField     | Primary Key  | Unique identifier for the library.     |
+| `user`      | OneToOneField | Cascade      | Foreign key referring to `User`.     |
 | `createdAt` | DateTimeField | Auto Now Add | Date and time the library was created. |
 
 ### MusicTrack
 
-| Field | Type | Attributes | Description |
-| --- | --- | --- | --- |
-| `trackId` | AutoField | Primary Key | Unique identifier for the track. |
-| `title` | CharField(255) | | Title of the music track. |
-| `duration` | IntegerField | Null/Blank | Duration of the track in seconds. |
-| `genre` | CharField(50) | Choices | Genre of the track (e.g., POP, ROCK). |
-| `mood` | CharField(100) | | Mood of the track. |
-| `occasion` | CharField(100) | | Occasion for the track. |
-| `status` | CharField(50) | Choices, Default | Processing status (AVAILABLE, PROCESSING, FAILED). |
-| `user` | ForeignKey | Cascade | Owner of the track. |
-| `library` | ForeignKey | Cascade | The library this track belongs to. |
-
-### ListeningActivity
-
-| Field | Type | Attributes | Description |
-| --- | --- | --- | --- |
-| `activityId` | AutoField | Primary Key | Unique id for the listening activity. |
-| `playedAt` | DateTimeField | Auto Now Add | Timestamp when the track was played. |
-| `duration` | IntegerField | | Duration played in seconds. |
-| `user` | ForeignKey | Cascade | User who listened to the track. |
-| `track` | ForeignKey | Cascade | Track that was listened to. |
+| Field          | Type           | Attributes       | Description                                                |
+| -------------- | -------------- | ---------------- | ---------------------------------------------------------- |
+| `trackId`    | AutoField      | Primary Key      | Unique identifier for the track.                           |
+| `title`      | CharField(255) |                  | Title of the music track.                                  |
+| `genre`      | CharField(255) |                  | Style/Genre of the track.                                  |
+| `status`     | CharField(50)  | Choices, Default | Generation status (AVAILABLE, PROCESSING, FAILED, HIDDEN). |
+| `visibility` | CharField(50)  | Choices, Default | Access control (PRIVATE, PUBLIC).                          |
+| `audio_url`  | URLField(1000) | Null/Blank       | URL link to the generated MP3 file.                        |
+| `image_url`  | URLField(1000) | Null/Blank       | URL link to the generated cover image.                     |
+| `user`       | ForeignKey     | Cascade          | Owner of the track.                                        |
+| `library`    | ForeignKey     | Cascade          | The library this track belongs to.                         |
 
 ### GenerationRequest
 
-| Field | Type | Attributes | Description |
-| --- | --- | --- | --- |
-| `requestId` | AutoField | Primary Key | Unique request identifier. |
-| `prompt` | TextField | | The user's prompt text for generation. |
-| `status` | CharField(50) | Choices, Default | Generation status (QUEUED, RUNNING, SUCCESS, FAILED). |
-| `createdAt` | DateTimeField | Auto Now Add | Request creation timestamp. |
-| `user` | ForeignKey | Cascade | User who requested the generation. |
-| `track` | OneToOneField | Cascade, Null/Blank| The generated Track associated with the prompt. |
+| Field            | Type           | Attributes          | Description                                           |
+| ---------------- | -------------- | ------------------- | ----------------------------------------------------- |
+| `requestId`    | AutoField      | Primary Key         | Unique request identifier.                            |
+| `prompt`       | TextField      |                     | The user's prompt text for generation.                |
+| `title`        | CharField(255) | Null/Blank          | Requested title.                                      |
+| `style`        | CharField(255) | Null/Blank          | Requested style/genre.                                |
+| `negativeTags` | CharField(255) | Null/Blank          | Tags to avoid during generation.                      |
+| `vocalGender`  | CharField(10)  | Null/Blank          | Male ('m') or Female ('f') vocals.                    |
+| `status`       | CharField(50)  | Choices, Default    | Generation status (QUEUED, RUNNING, SUCCESS, FAILED). |
+| `createdAt`    | DateTimeField  | Auto Now Add        | Request creation timestamp.                           |
+| `suno_task_id` | CharField(255) | Null/Blank          | Reference ID from the Suno API.                       |
+| `user`         | ForeignKey     | Cascade             | User who requested the generation.                    |
+| `track`        | OneToOneField  | Cascade, Null/Blank | The generated Track associated with the request.      |
 
-### SharePermission
+### TrackInvite
 
-| Field | Type | Attributes | Description |
-| --- | --- | --- | --- |
-| `permissionId`| AutoField | Primary Key | Unique permission identifier. |
-| `accessLevel` | CharField(50) | Choices | Access level (VIEW, DOWNLOAD, SHARE). |
-| `shareLink` | URLField(500) | Null/Blank | URL for sharing the track. |
-| `createdAt` | DateTimeField | Auto Now Add | Timestamp when the permission was created. |
-| `track` | ForeignKey | Cascade | Track this permission applies to. |
-
-### EmailInvitation
-
-| Field | Type | Attributes | Description |
-| --- | --- | --- | --- |
-| `invitationId`| AutoField | Primary Key | Unique invitation ID. |
-| `email` | EmailField | | The recipient's email address. |
-| `status` | CharField(50) | Choices, Default | Status (PENDING, SENT, ACCEPTED, EXPIRED).|
-| `sentAt` | DateTimeField | Null/Blank | Timestamp of the sent invitation. |
-| `permission` | ForeignKey | Cascade | The permission associated with this invite. |
-
-## Short Video Demonstration
-
-- [[Chithara AI Music Generator Database Model Demo]](https://youtu.be/GCpMxChnVcU)
-- [[Django Rest Framework API Demo]](https://youtu.be/NZ_4qv_uuA4)
+| Field             | Type          | Attributes          | Description                                    |
+| ----------------- | ------------- | ------------------- | ---------------------------------------------- |
+| `inviteId`      | AutoField     | Primary Key         | Unique invitation ID.                          |
+| `track`         | ForeignKey    | Cascade             | The track being shared.                        |
+| `inviter`       | ForeignKey    | Cascade             | User who sent the invite.                      |
+| `invitee_email` | EmailField    |                     | The recipient's email address.                 |
+| `invitee`       | ForeignKey    | Cascade, Null/Blank | Recipient user account (if registered).        |
+| `status`        | CharField(50) | Choices, Default    | Status (PENDING, ACCEPTED, REJECTED, REMOVED). |
+| `created_at`    | DateTimeField | Auto Now Add        | Timestamp of the sent invitation.              |

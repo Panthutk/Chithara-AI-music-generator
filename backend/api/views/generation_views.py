@@ -230,3 +230,24 @@ class CheckGenerationStatusView(APIView):
 class GenerationRequestViewSet(viewsets.ModelViewSet):
     queryset = GenerationRequest.objects.all()
     serializer_class = GenerationRequestSerializer
+
+class UserQuotaView(APIView):
+    def get(self, request):
+        user_id = request.query_params.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        week_ago = timezone.now() - datetime.timedelta(days=7)
+        recent_requests_count = GenerationRequest.objects.filter(user=user, createdAt__gte=week_ago).count()
+        remaining = max(0, 30 - recent_requests_count)
+        
+        return Response({
+            'total_limit': 30,
+            'used': recent_requests_count,
+            'remaining': remaining
+        })
