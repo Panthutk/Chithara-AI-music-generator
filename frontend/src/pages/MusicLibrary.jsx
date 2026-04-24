@@ -11,6 +11,7 @@ import ShareIcon from '@mui/icons-material/Share';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import DownloadIcon from '@mui/icons-material/Download';
 
 const MusicLibrary = () => {
   const [searchParams] = useSearchParams();
@@ -140,6 +141,25 @@ const MusicLibrary = () => {
       alert('An unexpected error occurred.');
     }
     finally { setIsSendingInvite(false); }
+  };
+
+  const handleDownloadTrack = async (e, track) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(track.audio_url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `${track.title} - ${user.name}.mp3`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error('Failed to download track', err);
+      window.open(track.audio_url, '_blank');
+    }
   };
 
   const handlePlayNext = () => {
@@ -382,6 +402,16 @@ const MusicLibrary = () => {
                       <div className="flex items-center gap-4 text-[#8c918a] text-sm">
                         {track.status === 'AVAILABLE' ? (
                           <div className="flex items-center gap-4">
+                            {track.audio_url && (
+                              <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button 
+                                  className="p-2 text-gray-400 hover:text-white transition-colors flex" 
+                                  onClick={(e) => handleDownloadTrack(e, track)}
+                                >
+                                  <DownloadIcon fontSize="small" />
+                                </button>
+                              </div>
+                            )}
                             {activeTab !== 2 && (
                               <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 
