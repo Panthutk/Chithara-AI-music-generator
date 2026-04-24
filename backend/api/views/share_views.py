@@ -37,6 +37,15 @@ class ShareTrackView(APIView):
             # Check if user with this email exists
             invitee = User.objects.filter(email__iexact=invite_email).first()
             
+            # Prevent cross-role interaction between MOCK_USER and regular users
+            is_invitee_mock = invitee.role == 'MOCK_USER' if invitee else invite_email.lower().endswith('@chitharamock.com')
+            is_inviter_mock = inviter.role == 'MOCK_USER' if inviter else False
+            
+            if is_inviter_mock and not is_invitee_mock:
+                return Response({'error': 'Mock users can only interact with other mock users.'}, status=status.HTTP_403_FORBIDDEN)
+            if not is_inviter_mock and is_invitee_mock:
+                return Response({'error': 'Regular users cannot interact with mock users.'}, status=status.HTTP_403_FORBIDDEN)
+            
             # Check for existing invites
             existing_invite = TrackInvite.objects.filter(track=track, invitee_email=invite_email).first()
             if existing_invite:
