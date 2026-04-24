@@ -1,4 +1,4 @@
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
@@ -6,6 +6,10 @@ from api.models.music_track import MusicTrack
 from api.models.track_invite import TrackInvite
 from api.models.user import User
 from api.serializers import MusicTrackSerializer, TrackInviteSerializer
+
+class TrackInviteViewSet(viewsets.ModelViewSet):
+    queryset = TrackInvite.objects.all()
+    serializer_class = TrackInviteSerializer
 
 class ShareTrackView(APIView):
     def patch(self, request, track_id):
@@ -33,6 +37,19 @@ class ShareTrackView(APIView):
             # Check if user with this email exists
             invitee = User.objects.filter(email__iexact=invite_email).first()
             
+            # Check for existing invites
+            existing_invite = TrackInvite.objects.filter(track=track, invitee_email=invite_email).first()
+            if existing_invite:
+                if existing_invite.status in [TrackInvite.Status.PENDING, TrackInvite.Status.ACCEPTED]:
+                    return Response({'error': 'User already has a pending or accepted invite for this track.'}, status=status.HTTP_400_BAD_REQUEST)
+                else:
+                    # Reuse the old invite
+                    existing_invite.status = TrackInvite.Status.PENDING
+                    existing_invite.inviter_id = user_id
+                    existing_invite.invitee = invitee
+                    existing_invite.save()
+                    return Response({'message': 'Invite sent', 'invite_id': existing_invite.inviteId}, status=status.HTTP_200_OK)
+
             # Create the invite
             invite = TrackInvite.objects.create(
                 track=track,
@@ -91,7 +108,7 @@ class RemoveSharedTrackView(APIView):
         if not user_id:
             return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
             
-        deleted, _ = TrackInvite.objects.filter(track_id=track_id, invitee_id=user_id).delete()
-        if deleted:
+        updated = TrackInvite.objects.filter(track_id=track_id, invitee_id=user_id).update(status=TrackInvite.Status.REMOVED)
+        if updated:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response({'error': 'Invite not found'}, status=status.HTTP_404_NOT_FOUND)

@@ -435,14 +435,29 @@ const MusicLibrary = () => {
             ) : (
               <div className="flex flex-col items-center justify-center py-24 border border-dashed border-white/10 rounded-2xl bg-white/[0.02] mt-10">
                 <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                  </svg>
+                  {activeTab === 2 ? (
+                    <svg className="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                  )}
                 </div>
-                <p className="text-lg font-medium text-gray-300 mb-2">No tracks generated yet</p>
-                <button onClick={() => navigate('/generate')} className="mt-4 px-6 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-colors">
-                  Generate Track
-                </button>
+                <p className="text-lg font-medium text-gray-300 mb-2">
+                  {activeTab === 2 ? "Your shared library is empty" : "No tracks generated yet"}
+                </p>
+                <p className="text-sm text-gray-500 mb-4 max-w-sm text-center">
+                  {activeTab === 2 
+                    ? "Invite your friends to share their awesome music with you, or share your own tracks with others!" 
+                    : "You haven't generated any tracks yet. Click the button below to get started."}
+                </p>
+                {activeTab !== 2 && (
+                  <button onClick={() => navigate('/generate')} className="mt-4 px-6 py-2.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition-colors">
+                    Generate Track
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -615,6 +630,10 @@ const MusicLibrary = () => {
         tracks={tracks.filter(t => t.status === 'AVAILABLE')}
         onPlayNext={handlePlayNext}
         onPlayPrev={handlePlayPrev}
+        onRename={activeTab !== 2 ? (track) => { setEditingTrack(track); setNewTitle(track.title); } : null}
+        onViewPrompt={(track) => setViewingPromptTrack(track)}
+        onDelete={activeTab !== 2 ? handleDeleteTrack : handleRemoveSharedTrack}
+        onShare={activeTab !== 2 ? (track) => { setShareModalTrack(track); setShareMode(track.visibility || 'PRIVATE'); } : null}
       />
     </div>
   );

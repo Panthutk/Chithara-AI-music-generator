@@ -8,7 +8,8 @@ from .share_views import (
     PendingInvitesView,
     RespondInviteView,
     SharedLibraryView,
-    RemoveSharedTrackView
+    RemoveSharedTrackView,
+    TrackInviteViewSet
 )
 from .generation_views import (
     GenerateMusicView,
@@ -30,4 +31,5 @@ __all__ = [
     'RespondInviteView',
     'SharedLibraryView',
     'RemoveSharedTrackView',
+    'TrackInviteViewSet',
 ]

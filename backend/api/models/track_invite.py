@@ -5,6 +5,7 @@ class TrackInvite(models.Model):
         PENDING = 'PENDING', 'Pending'
         ACCEPTED = 'ACCEPTED', 'Accepted'
         REJECTED = 'REJECTED', 'Rejected'
+        REMOVED = 'REMOVED', 'Removed'
 
     inviteId = models.AutoField(primary_key=True)
     track = models.ForeignKey(

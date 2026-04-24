@@ -9,7 +9,7 @@ import RepeatIcon from '@mui/icons-material/Repeat';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ShareIcon from '@mui/icons-material/Share';
-const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, onViewPrompt, onDelete }) => {
+const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, onViewPrompt, onDelete, onShare }) => {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -163,17 +163,27 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, o
       {/* Right: Volume & Extras */}
       <div className="flex items-center justify-end gap-4 w-1/4 text-gray-400 min-w-[150px] hidden md:flex">
 
-        <button className="p-1 hover:text-white transition-colors"><ShareIcon fontSize="small" /></button>
+        {onShare && (
+          <button onClick={() => onShare(currentTrack)} className="p-1 hover:text-white transition-colors"><ShareIcon fontSize="small" /></button>
+        )}
         <div className="relative">
           <button className="p-1 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); setShowDropdown(!showDropdown); }}>
             <MoreVertIcon fontSize="small" />
           </button>
           {showDropdown && (
             <div className="absolute right-0 bottom-full mb-4 w-48 bg-[#1a1a1a] rounded-lg shadow-xl border border-white/10 z-50 py-1 overflow-hidden">
-              <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); if(onRename) onRename(currentTrack); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">Rename title</button>
-              <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); if(onViewPrompt) onViewPrompt(currentTrack); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">View song prompt</button>
-              <div className="h-px bg-white/10 my-1"></div>
-              <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); if(onDelete) onDelete(currentTrack.trackId); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors">Delete song</button>
+              {onRename && (
+                <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); onRename(currentTrack); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">Rename title</button>
+              )}
+              {onViewPrompt && (
+                <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); onViewPrompt(currentTrack); }} className="w-full text-left px-4 py-2.5 text-sm text-gray-300 hover:bg-white/10 hover:text-white transition-colors">View song prompt</button>
+              )}
+              {(onRename || onViewPrompt) && onDelete && (
+                <div className="h-px bg-white/10 my-1"></div>
+              )}
+              {onDelete && (
+                <button onClick={(e) => { e.stopPropagation(); setShowDropdown(false); onDelete(currentTrack.trackId); }} className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-white/10 hover:text-red-300 transition-colors">Delete song</button>
+              )}
             </div>
           )}
         </div>

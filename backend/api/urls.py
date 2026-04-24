@@ -13,7 +13,8 @@ from .views import (
     PendingInvitesView,
     RespondInviteView,
     SharedLibraryView,
-    RemoveSharedTrackView
+    RemoveSharedTrackView,
+    TrackInviteViewSet
 )
 
 router = DefaultRouter()
@@ -21,6 +22,7 @@ router.register(r'users', UserViewSet, basename='user')
 router.register(r'libraries', MusicLibraryViewSet, basename='library')
 router.register(r'tracks', MusicTrackViewSet, basename='track')
 router.register(r'generation-requests', GenerationRequestViewSet, basename='generation-request')
+router.register(r'track-invites', TrackInviteViewSet, basename='track-invite')
 
 urlpatterns = [
     path('generate-music/', GenerateMusicView.as_view(), name='generate-music'),
