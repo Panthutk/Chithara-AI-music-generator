@@ -23,6 +23,10 @@ const MusicLibrary = () => {
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
   const [activeDropdownTrackId, setActiveDropdownTrackId] = useState(null);
   const [editingTrack, setEditingTrack] = useState(null);
   const [newTitle, setNewTitle] = useState('');
@@ -35,40 +39,65 @@ const MusicLibrary = () => {
   const [shareMode, setShareMode] = useState('PRIVATE');
   const [inviteEmail, setInviteEmail] = useState('');
   const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [deleteModalState, setDeleteModalState] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState(null);
+
+  const showFeedback = (message, isError = false) => {
+    setFeedbackMessage({ text: message, isError });
+    setTimeout(() => setFeedbackMessage(null), 3000);
+  };
 
   useEffect(() => {
-    const handleClickOutside = () => setActiveDropdownTrackId(null);
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.profile-dropdown-container')) {
+        setShowProfileDropdown(false);
+      }
+      if (!e.target.closest('.more-options-container')) {
+        setActiveDropdownTrackId(null);
+      }
+    };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const handleDeleteTrack = async (trackId) => {
-    try {
-      const res = await fetch(`http://localhost:8000/api/tracks/${trackId}/`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'HIDDEN' })
-      });
-      if (res.ok) {
-        setTracks(prev => prev.filter(t => t.trackId !== trackId));
-        if (currentTrack?.trackId === trackId) setCurrentTrack(null);
-      }
-    } catch (e) {
-      console.error('Failed to hide track', e);
-    }
+  const handleDeleteTrack = (trackId) => {
+    setDeleteModalState({ type: 'DELETE', trackId });
   };
 
-  const handleRemoveSharedTrack = async (trackId) => {
+  const handleRemoveSharedTrack = (trackId) => {
+    setDeleteModalState({ type: 'REMOVE_SHARED', trackId });
+  };
+
+  const executeDeleteTrack = async () => {
+    if (!deleteModalState) return;
+    const { trackId, type } = deleteModalState;
     try {
-      const res = await fetch(`http://localhost:8000/api/tracks/${trackId}/shared/?user_id=${user.userId}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        setTracks(prev => prev.filter(t => t.trackId !== trackId));
-        if (currentTrack?.trackId === trackId) setCurrentTrack(null);
+      if (type === 'DELETE') {
+        const res = await fetch(`http://localhost:8000/api/tracks/${trackId}/`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'HIDDEN' })
+        });
+        if (res.ok) {
+          setTracks(prev => prev.filter(t => t.trackId !== trackId));
+          if (currentTrack?.trackId === trackId) setCurrentTrack(null);
+          showFeedback('Track deleted successfully.');
+        }
+      } else {
+        const res = await fetch(`http://localhost:8000/api/tracks/${trackId}/shared/?user_id=${user.userId}`, {
+          method: 'DELETE'
+        });
+        if (res.ok) {
+          setTracks(prev => prev.filter(t => t.trackId !== trackId));
+          if (currentTrack?.trackId === trackId) setCurrentTrack(null);
+          showFeedback('Shared track removed from library.');
+        }
       }
     } catch (e) {
-      console.error('Failed to remove shared track', e);
+      console.error('Failed to delete/remove track', e);
+      showFeedback('An unexpected error occurred.', true);
+    } finally {
+      setDeleteModalState(null);
     }
   };
 
@@ -134,11 +163,11 @@ const MusicLibrary = () => {
         setInviteEmail('');
       } else {
         const errorData = await res.json();
-        alert(errorData.error || 'Failed to share track');
+        showFeedback(errorData.error || 'Failed to share track', true);
       }
     } catch (e) { 
       console.error('Failed to share track', e); 
-      alert('An unexpected error occurred.');
+      showFeedback('An unexpected error occurred.', true);
     }
     finally { setIsSendingInvite(false); }
   };
@@ -231,6 +260,29 @@ const MusicLibrary = () => {
     };
   }, [user, activeTab]);
 
+  const getFilteredAndSortedTracks = () => {
+    let result = [...tracks];
+
+    // Filter by title
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(t => (t.title || 'Untitled Track').toLowerCase().includes(q));
+    }
+
+    // Sort
+    if (sortBy === 'newest') {
+      result.sort((a, b) => b.trackId - a.trackId);
+    } else if (sortBy === 'oldest') {
+      result.sort((a, b) => a.trackId - b.trackId);
+    } else if (sortBy === 'genre') {
+      result.sort((a, b) => (a.genre || '').localeCompare(b.genre || ''));
+    }
+
+    return result;
+  };
+
+  const displayedTracks = getFilteredAndSortedTracks();
+
   useEffect(() => {
     if (!user) return;
     const fetchInvites = async () => {
@@ -266,6 +318,21 @@ const MusicLibrary = () => {
         const decodedJson = atob(payloadBase64);
         const decodedData = JSON.parse(decodedJson);
         setUser(decodedData);
+
+        // Verify session backend
+        fetch('http://localhost:8000/api/auth/verify-session/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.valid === false) {
+             localStorage.removeItem('chithara_token');
+             navigate('/');
+          }
+        }).catch(console.error);
+
       } catch (error) {
         console.error("Failed to parse token", error);
         localStorage.removeItem('chithara_token');
@@ -314,7 +381,9 @@ const MusicLibrary = () => {
             </div>
             <input
               type="text"
-              placeholder="Search songs, albums, artists, podcasts"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search songs by track title..."
               className="w-full bg-[#1a1a1a] border border-white/10 rounded-full py-2.5 pl-12 pr-4 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/50 transition-all"
             />
           </div>
@@ -338,8 +407,29 @@ const MusicLibrary = () => {
             )}
           </button>
 
-          <div className="w-8 h-8 ml-2 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-300 flex items-center justify-center text-xs font-bold text-black uppercase cursor-pointer shadow-lg">
-            {user.name.charAt(0)}
+          <div className="relative profile-dropdown-container">
+            <div 
+              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+              className="w-8 h-8 ml-2 rounded-full bg-gradient-to-tr from-emerald-500 to-emerald-300 flex items-center justify-center text-xs font-bold text-black uppercase cursor-pointer shadow-lg"
+            >
+              {user.name.charAt(0)}
+            </div>
+            {showProfileDropdown && (
+              <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+                <div className="px-4 py-2 text-xs text-gray-400 border-b border-white/10 mb-1">
+                  Logged in as <span className="font-semibold text-white">{user.name}</span>
+                </div>
+                <button 
+                  onClick={() => {
+                    localStorage.removeItem('chithara_token');
+                    navigate('/');
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/10 transition-colors"
+                >
+                  Log out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </nav>
@@ -363,14 +453,22 @@ const MusicLibrary = () => {
             ) : tracks.length > 0 ? (
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-4 px-2">
-                  <div className="flex items-center text-gray-400 text-sm font-medium hover:text-white cursor-pointer transition-colors">
+                  <div className="flex items-center text-gray-400 text-sm font-medium">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
-                    Sort
+                    <select 
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="bg-transparent border-none text-gray-400 hover:text-white cursor-pointer focus:outline-none focus:ring-0"
+                    >
+                      <option value="newest" className="bg-[#1a1a1a] text-white">Date (Newest)</option>
+                      <option value="oldest" className="bg-[#1a1a1a] text-white">Date (Oldest)</option>
+                      <option value="genre" className="bg-[#1a1a1a] text-white">Genre / Type</option>
+                    </select>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  {tracks.map(track => (
+                  {displayedTracks.map(track => (
                     <div key={track.trackId} onClick={() => track.status === 'AVAILABLE' && setCurrentTrack(track)} className="flex items-center justify-between p-3 pr-6 rounded-xl bg-[#141812] hover:bg-[#1f261c] transition-colors group cursor-pointer border border-[#1e261b]">
                       <div className="flex items-center gap-4">
                         <div className="relative w-[52px] h-[52px] bg-[#222] rounded overflow-hidden shrink-0 flex items-center justify-center">
@@ -599,7 +697,7 @@ const MusicLibrary = () => {
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(`${window.location.origin}/track/${shareModalTrack.trackId}`);
-                      alert('Link copied to clipboard!');
+                      showFeedback('Link copied to clipboard!');
                     }}
                     className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors whitespace-nowrap"
                   >
@@ -674,6 +772,45 @@ const MusicLibrary = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete/Remove Confirmation Modal */}
+      {deleteModalState && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
+          <div className="bg-[#141812] border border-[#1e261b] rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <h2 className="text-xl font-bold text-white mb-3">
+              {deleteModalState.type === 'DELETE' ? 'Delete Track' : 'Remove Shared Track'}
+            </h2>
+            <p className="text-sm text-gray-400 mb-6">
+              {deleteModalState.type === 'DELETE' 
+                ? 'Are you sure you want to delete this track? This action cannot be undone.'
+                : 'Are you sure you want to remove this track from your shared library?'}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setDeleteModalState(null)} 
+                className="px-5 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDeleteTrack} 
+                className="px-5 py-2 bg-red-500 hover:bg-red-400 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
+                {deleteModalState.type === 'DELETE' ? 'Delete' : 'Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Feedback Toast */}
+      {feedbackMessage && (
+        <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-[200]">
+          <div className={`px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border ${feedbackMessage.isError ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+            <span className="text-sm font-semibold">{feedbackMessage.text}</span>
           </div>
         </div>
       )}

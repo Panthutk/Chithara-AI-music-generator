@@ -10,6 +10,8 @@ from api.models.music_library import MusicLibrary
 from api.models.music_track import MusicTrack
 from api.models.generation_request import GenerationRequest
 from api.serializers import GenerationRequestSerializer
+from django.utils import timezone
+import datetime
 
 # Simple .env loader
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
@@ -33,6 +35,12 @@ class GenerateMusicView(APIView):
             
         # Get or create library for user
         library, created = MusicLibrary.objects.get_or_create(user=user)
+
+        # Enforce weekly quota (max 30 requests per 7 days)
+        week_ago = timezone.now() - datetime.timedelta(days=7)
+        recent_requests_count = GenerationRequest.objects.filter(user=user, createdAt__gte=week_ago).count()
+        if recent_requests_count >= 30:
+            return Response({'error': f'Weekly quota exceeded. You have generated {recent_requests_count} tracks in the last 7 days. Maximum allowed is 30.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         prompt = request.data.get('prompt', 'A calm and relaxing piano track')
         title = request.data.get('title', 'Generated Track')

@@ -6,6 +6,7 @@ class User(models.Model):
     name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=50)
+    session_token = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         app_label = 'api'

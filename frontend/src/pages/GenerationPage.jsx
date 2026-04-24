@@ -13,6 +13,7 @@ const GenerationPage = () => {
   const [style, setStyle] = useState('Classical');
   const [vocalGender, setVocalGender] = useState('m');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     let token = localStorage.getItem('chithara_token');
@@ -22,6 +23,21 @@ const GenerationPage = () => {
         const decodedJson = atob(payloadBase64);
         const decodedData = JSON.parse(decodedJson);
         setUser(decodedData);
+
+        // Verify session backend
+        fetch('http://localhost:8000/api/auth/verify-session/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.valid === false) {
+             localStorage.removeItem('chithara_token');
+             navigate('/');
+          }
+        }).catch(console.error);
+
       } catch (error) {
         navigate('/');
       }
@@ -55,11 +71,11 @@ const GenerationPage = () => {
         navigate('/library');
       } else {
         const errData = await response.json();
-        alert('Generation failed: ' + (errData.error || 'Unknown error'));
+        setErrorMessage('Generation failed: ' + (errData.error || 'Unknown error'));
       }
     } catch (err) {
       console.error(err);
-      alert('An error occurred submitting the generation request.');
+      setErrorMessage('An error occurred submitting the generation request.');
     } finally {
       setIsSubmitting(false);
     }
@@ -93,6 +109,12 @@ const GenerationPage = () => {
         <form onSubmit={handleSubmit} className="bg-[#111111] border border-white/5 p-8 sm:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
           {/* Ambient glow */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+
+          {errorMessage && (
+            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium relative z-10">
+              {errorMessage}
+            </div>
+          )}
 
           <div className="space-y-6 relative z-10">
             {/* Title field */}

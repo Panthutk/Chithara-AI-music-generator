@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from api.models.user import User
 from api.serializers import UserSerializer
+import uuid
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -76,11 +77,16 @@ class GoogleCallbackView(APIView):
             defaults={'name': name, 'role': 'User'}
         )
         
+        # Generate new session token
+        user.session_token = str(uuid.uuid4())
+        user.save()
+        
         # Generate JWT
         jwt_payload = {
             'userId': user.userId,
             'email': user.email,
             'name': user.name,
+            'session_token': user.session_token,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7),
             'iat': datetime.datetime.utcnow(),
         }
@@ -90,3 +96,25 @@ class GoogleCallbackView(APIView):
         # Redirect to frontend
         frontend_url = f"http://localhost:7999/library?token={token}"
         return redirect(frontend_url)
+
+class VerifySessionView(APIView):
+    def post(self, request):
+        token = request.data.get('token')
+        if not token:
+            return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            decoded_data = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = decoded_data.get('userId')
+            session_token = decoded_data.get('session_token')
+            
+            user = User.objects.get(pk=user_id)
+            if user.session_token and user.session_token == session_token:
+                return Response({'valid': True}, status=status.HTTP_200_OK)
+            else:
+                return Response({'valid': False, 'error': 'Invalid session or logged in elsewhere'}, status=status.HTTP_401_UNAUTHORIZED)
+                
+        except jwt.ExpiredSignatureError:
+            return Response({'valid': False, 'error': 'Token expired'}, status=status.HTTP_401_UNAUTHORIZED)
+        except (jwt.InvalidTokenError, User.DoesNotExist):
+            return Response({'valid': False, 'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
