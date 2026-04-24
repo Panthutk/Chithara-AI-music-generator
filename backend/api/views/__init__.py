@@ -1,8 +1,7 @@
 from .auth_views import UserViewSet, GoogleLoginView, GoogleCallbackView
 from .library_views import (
     MusicLibraryViewSet,
-    MusicTrackViewSet,
-    ListeningActivityViewSet
+    MusicTrackViewSet
 )
 from .share_views import (
     ShareTrackView,
@@ -21,7 +20,6 @@ __all__ = [
     'UserViewSet',
     'MusicLibraryViewSet',
     'MusicTrackViewSet',
-    'ListeningActivityViewSet',
     'GenerateMusicView',
     'CheckGenerationStatusView',
     'GenerationRequestViewSet',

@@ -4,7 +4,6 @@ from .views import (
     UserViewSet,
     MusicLibraryViewSet,
     MusicTrackViewSet,
-    ListeningActivityViewSet,
     GenerationRequestViewSet,
     GenerateMusicView,
     CheckGenerationStatusView,
@@ -21,7 +20,6 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'libraries', MusicLibraryViewSet, basename='library')
 router.register(r'tracks', MusicTrackViewSet, basename='track')
-router.register(r'listening-activities', ListeningActivityViewSet, basename='listening-activity')
 router.register(r'generation-requests', GenerationRequestViewSet, basename='generation-request')
 
 urlpatterns = [

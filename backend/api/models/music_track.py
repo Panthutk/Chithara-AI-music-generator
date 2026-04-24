@@ -16,11 +16,7 @@ class MusicTrack(models.Model):
 
     trackId = models.AutoField(primary_key=True)
     title = models.CharField(max_length=255)
-    duration = models.IntegerField(
-        help_text="Duration in seconds", null=True, blank=True)
     genre = models.CharField(max_length=255)
-    mood = models.CharField(max_length=100)
-    occasion = models.CharField(max_length=100)
     status = models.CharField(
         max_length=50, choices=Status.choices, default=Status.PROCESSING)
     visibility = models.CharField(

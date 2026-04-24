@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, MusicLibrary, MusicTrack, GenerationRequest, TrackInvite, ListeningActivity
+from .models import User, MusicLibrary, MusicTrack, GenerationRequest, TrackInvite
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -25,6 +25,3 @@ class GenerationRequestAdmin(admin.ModelAdmin):
 class TrackInviteAdmin(admin.ModelAdmin):
     list_display = ('inviteId', 'track', 'invitee_email', 'status', 'created_at')
 
-@admin.register(ListeningActivity)
-class ListeningActivityAdmin(admin.ModelAdmin):
-    list_display = ('activityId', 'user', 'track', 'playedAt', 'duration')

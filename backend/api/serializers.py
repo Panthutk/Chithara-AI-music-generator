@@ -2,7 +2,6 @@ from rest_framework import serializers
 from .models.user import User
 from .models.music_library import MusicLibrary
 from .models.music_track import MusicTrack
-from .models.listening_activity import ListeningActivity
 from .models.generation_request import GenerationRequest
 from .models.track_invite import TrackInvite
 
@@ -34,10 +33,6 @@ class MusicTrackSerializer(serializers.ModelSerializer):
             return obj.generation_request.prompt
         return None
 
-class ListeningActivitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ListeningActivity
-        fields = '__all__'
 
 class GenerationRequestSerializer(serializers.ModelSerializer):
     class Meta:

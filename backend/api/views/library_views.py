@@ -1,12 +1,10 @@
 from rest_framework import viewsets
 from api.models.music_library import MusicLibrary
 from api.models.music_track import MusicTrack
-from api.models.listening_activity import ListeningActivity
 
 from api.serializers import (
     MusicLibrarySerializer,
-    MusicTrackSerializer,
-    ListeningActivitySerializer
+    MusicTrackSerializer
 )
 
 class MusicLibraryViewSet(viewsets.ModelViewSet):
@@ -26,8 +24,5 @@ class MusicTrackViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user_id=user_id)
         return queryset
 
-class ListeningActivityViewSet(viewsets.ModelViewSet):
-    queryset = ListeningActivity.objects.all()
-    serializer_class = ListeningActivitySerializer
 
 
