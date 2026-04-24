@@ -24,5 +24,13 @@ class MusicTrackViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(user_id=user_id)
         return queryset
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.status = MusicTrack.Status.HIDDEN
+        instance.save()
+        from rest_framework.response import Response
+        from rest_framework import status
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 
