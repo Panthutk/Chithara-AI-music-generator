@@ -12,6 +12,7 @@ from api.models.generation_request import GenerationRequest
 from api.serializers import GenerationRequestSerializer
 from django.utils import timezone
 import datetime
+from api.strategies.generation_strategy import GenerationContext, SunoGenerationStrategy, MockGenerationStrategy
 
 # Simple .env loader
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.env')
@@ -72,84 +73,14 @@ class GenerateMusicView(APIView):
         gen_request.track = track
         gen_request.save()
         
-        # Prepare API call to Suno
-        api_key = os.environ.get('SUNO_API_KEY')
-        if not api_key:
-            return Response({'error': 'API key not configured on server'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Choose strategy
+        if user.role == 'MOCK_USER':
+            strategy = MockGenerationStrategy()
+        else:
+            strategy = SunoGenerationStrategy()
             
-        url = "https://api.sunoapi.org/api/v1/generate"
-        payload = {
-            "customMode": True,
-            "instrumental": vocal_gender == 'none',
-            "model": "V4_5ALL",
-            "callBackUrl": "https://api.example.com/callback",
-            "prompt": prompt,
-            "style": style,
-            "title": title,
-            "negativeTags": negative,
-            "styleWeight": 0.65,
-            "weirdnessConstraint": 0.65,
-            "audioWeight": 0.65
-        }
-        
-        if vocal_gender != 'none':
-            payload["vocalGender"] = vocal_gender
-        
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        }
-        
-        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
-        try:
-            with urllib.request.urlopen(req) as response:
-                result = json.loads(response.read().decode())
-                
-                data = result.get('data')
-                
-                gen_request.status = GenerationRequest.Status.RUNNING
-                
-                if isinstance(data, str) and data.strip().startswith('{'):
-                    import json as json_lib
-                    try:
-                        # Change single quotes to double quotes for dirty JSON
-                        data = json_lib.loads(data.replace("'", '"'))
-                    except:
-                        pass
-                        
-                if isinstance(data, str) and data.strip() != "" and not data.strip().startswith('{'):
-                    gen_request.suno_task_id = data
-                elif isinstance(data, dict):
-                    gen_request.suno_task_id = data.get('task_id') or data.get('id') or data.get('taskId')
-                elif isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
-                    gen_request.suno_task_id = data[0].get('id') or data[0].get('task_id') or data[0].get('taskId')
-                
-                if not gen_request.suno_task_id:
-                    gen_request.suno_task_id = result.get('task_id') or result.get('id') or result.get('taskId')
-                    
-                # Store string representation if still not found for debugging (clean it if dict)
-                if not gen_request.suno_task_id and isinstance(data, dict):
-                     gen_request.suno_task_id = data.get('taskId') or data.get('id') or str(data)
-                
-                gen_request.save()
-                
-                return Response({
-                    "message": "Music generation started successfully.",
-                    "status": "PROCESSING",
-                    "track_id": track.trackId,
-                    "request_id": gen_request.requestId,
-                    "suno_api_response": result
-                }, status=status.HTTP_200_OK)
-        except urllib.error.URLError as e:
-            gen_request.status = GenerationRequest.Status.FAILED
-            gen_request.save()
-            track.status = MusicTrack.Status.FAILED
-            track.save()
-            error_msg = str(e)
-            if hasattr(e, 'read'):
-                error_msg += ": " + e.read().decode()
-            return Response({'error': f'Failed to call generation API: {error_msg}'}, status=status.HTTP_502_BAD_GATEWAY)
+        context = GenerationContext(strategy)
+        return context.execute_generation(gen_request, track, prompt, style, negative, vocal_gender)
 
 class CheckGenerationStatusView(APIView):
     def get(self, request):
@@ -162,15 +93,15 @@ class CheckGenerationStatusView(APIView):
         except GenerationRequest.DoesNotExist:
             return Response({'error': 'Generation request not found'}, status=status.HTTP_404_NOT_FOUND)
             
-        if not gen_request.suno_task_id:
-            return Response({'status': gen_request.status, 'error': 'No Suno Task ID tracked.'})
-
         if gen_request.status == GenerationRequest.Status.SUCCESS:
             return Response({
                 'status': 'SUCCESS', 
                 'audio_url': gen_request.track.audio_url if gen_request.track else None,
                 'image_url': gen_request.track.image_url if gen_request.track else None
             })
+            
+        if not gen_request.suno_task_id:
+            return Response({'status': gen_request.status, 'error': 'No Suno Task ID tracked.'})
             
         api_key = os.environ.get('SUNO_API_KEY')
         url = f"https://api.sunoapi.org/api/v1/generate/record-info?taskId={gen_request.suno_task_id}"

@@ -118,3 +118,39 @@ class VerifySessionView(APIView):
             return Response({'valid': False, 'error': 'Token expired'}, status=status.HTTP_401_UNAUTHORIZED)
         except (jwt.InvalidTokenError, User.DoesNotExist):
             return Response({'valid': False, 'error': 'Invalid token'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class MockLoginView(APIView):
+    def post(self, request):
+        email = request.data.get('email')
+        
+        if email not in ['special1@chitharamock.com', 'special2@chitharamock.com']:
+            return Response({"error": "Unauthorized mock email"}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Create or Get User as MOCK_USER
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={'name': email.split('@')[0], 'role': 'MOCK_USER'}
+        )
+        
+        # Enforce the role just in case it was created earlier with a different role
+        if user.role != 'MOCK_USER':
+            user.role = 'MOCK_USER'
+            user.save()
+            
+        # Generate new session token
+        user.session_token = str(uuid.uuid4())
+        user.save()
+        
+        # Generate JWT
+        jwt_payload = {
+            'userId': user.userId,
+            'email': user.email,
+            'name': user.name,
+            'session_token': user.session_token,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7),
+            'iat': datetime.datetime.utcnow(),
+        }
+        
+        token = jwt.encode(jwt_payload, settings.SECRET_KEY, algorithm='HS256')
+        
+        return Response({"token": token, "user": {"userId": user.userId, "email": user.email, "role": user.role}})

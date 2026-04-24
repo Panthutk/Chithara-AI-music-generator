@@ -11,7 +11,18 @@ This project is part of 0129243-65 Principle of Software Design
 - **Custom Audio Player**: Feature-rich web audio player supporting background playback, volume control, skipping, track shuffling, and looping.
 - **Security & Quotas**: Backend API rate limiting restricts generation to 30 tracks per user over a rolling 7-day period to prevent abuse.
 - **Live Quota Tracking & Alerts**: The UI tracks your remaining generation coins in real-time and gracefully displays custom bottom-right toast notifications if you run out of credits (bypassing ugly browser alerts).
+- **Strategy Pattern Architecture**: Generation logic is abstracted behind a `GenerationStrategy` interface, allowing dynamic runtime switching between actual Suno API generations and cost-free Mock generations without restarting the server or modifying `.env` flags.
 - **Track Management**: Rename or completely remove tracks from your personal or shared library.
+
+## Testing & Grading (Mock Strategy)
+
+To test the system without spending API credits, a secret **Mock UI Bypass** is implemented using the Strategy Pattern.
+
+1. On the Landing Page, click the small grey `Strategy: SUNO` text in the top-left navigation bar.
+2. Confirm the custom modal to switch to `Strategy: MOCK`.
+3. Click the standard "Login with Google" or "Sign up" button.
+4. Instead of opening Google OAuth, a Mock Login modal will appear. Select either `special1@chitharamock.com` or `special2@chitharamock.com`.
+5. These users are assigned the `MOCK_USER` role in the database. When they generate a track, the `MockGenerationStrategy` safely intercepts the request, copies an existing track from the database, and returns it instantly.
 
 ## Setup Instructions
 

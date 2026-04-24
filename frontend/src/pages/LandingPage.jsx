@@ -1,10 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PixelBlast from '../components/PixelBlast';
 
 const LandingPage = () => {
+  const [isMockStrategy, setIsMockStrategy] = useState(false);
+  const [showMockLogin, setShowMockLogin] = useState(false);
+  const [showStrategyConfirm, setShowStrategyConfirm] = useState(false);
+
   const handleGoogleLogin = () => {
+    if (isMockStrategy) {
+      setShowMockLogin(true);
+      return;
+    }
     // Redirect to Django Google OAuth endpoint
     window.location.href = 'http://localhost:8000/api/auth/google/'; 
+  };
+
+  const toggleStrategy = () => {
+    if (!isMockStrategy) {
+      setShowStrategyConfirm(true);
+    } else {
+      setIsMockStrategy(false);
+    }
+  };
+
+  const confirmStrategySwitch = () => {
+    setIsMockStrategy(true);
+    setShowStrategyConfirm(false);
+  };
+
+  const mockLogin = async (email) => {
+    try {
+      const res = await fetch('http://localhost:8000/api/auth/mock-login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Redirect just like Google callback would
+        window.location.href = `http://localhost:7999/library?token=${data.token}`;
+      } else {
+        alert('Mock login failed. Ensure backend is running.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error during mock login.');
+    }
   };
 
   return (
@@ -22,6 +63,15 @@ const LandingPage = () => {
               </svg>
             </div>
             <span className="font-extrabold text-white text-[19px] tracking-tight">Chithara</span>
+            
+            {/* Secret Strategy Toggle */}
+            <span 
+              onClick={toggleStrategy}
+              className={`ml-2 text-[10px] font-mono cursor-pointer px-1.5 py-0.5 rounded ${isMockStrategy ? 'bg-amber-500/20 text-amber-400' : 'text-white/20 hover:text-white/40'}`}
+              title="Click to toggle Generation Strategy"
+            >
+              Strategy: {isMockStrategy ? 'MOCK' : 'SUNO'}
+            </span>
           </div>
 
           <div className="flex items-center gap-8">
@@ -95,6 +145,70 @@ const LandingPage = () => {
             </a>
           </div>
         </div>
+
+        {/* Mock Login Modal */}
+        {showMockLogin && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-[#111] border border-white/10 p-8 rounded-2xl shadow-2xl max-w-sm w-full relative">
+              <button 
+                onClick={() => setShowMockLogin(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+              
+              <h3 className="text-2xl font-bold text-white mb-2">Mock Login</h3>
+              <p className="text-gray-400 text-sm mb-6">Select a test account to bypass Google OAuth and access the Mock Strategy generator.</p>
+              
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => mockLogin('special1@chitharamock.com')}
+                  className="w-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 py-3 rounded-xl font-bold hover:bg-emerald-500/20 transition-colors"
+                >
+                  Login as special1@chitharamock.com
+                </button>
+                <button 
+                  onClick={() => mockLogin('special2@chitharamock.com')}
+                  className="w-full bg-blue-500/10 border border-blue-500/30 text-blue-400 py-3 rounded-xl font-bold hover:bg-blue-500/20 transition-colors"
+                >
+                  Login as special2@chitharamock.com
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Mock Strategy Confirmation Modal */}
+        {showStrategyConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-[#111] border border-amber-500/30 p-8 rounded-2xl shadow-[0_0_50px_rgba(245,158,11,0.15)] max-w-sm w-full relative">
+              <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center mb-6">
+                <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Switch Strategy?</h3>
+              <p className="text-gray-400 text-sm mb-8 leading-relaxed">
+                You are about to switch to the <strong className="text-amber-500">Mock Generation Strategy</strong>. This mode will bypass the real Suno API and use dummy data from the database. It is intended for testing and grading purposes only.
+              </p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowStrategyConfirm(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmStrategySwitch}
+                  className="flex-1 bg-amber-500 text-black px-4 py-2.5 rounded-xl font-bold hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20"
+                >
+                  Confirm Switch
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* About Section */}
