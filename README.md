@@ -14,6 +14,148 @@ This project is part of 0129243-65 Principle of Software Design
 - **Strategy Pattern Architecture**: Generation logic is abstracted behind a `GenerationStrategy` interface, allowing dynamic runtime switching between actual Suno API generations and cost-free Mock generations without restarting the server or modifying `.env` flags.
 - **Track Management**: Rename or completely remove tracks from your personal or shared library.
 
+## System Architecture
+
+The project follows a decoupled, layered architecture separating the React frontend (Presentation), Django views (Controllers), Strategy logic, and Database Models.
+
+### Class Architecture Diagram
+
+```mermaid
+classDiagram
+    %% Presentation Layer (React Frontend)
+    class LandingPage {
+        +render()
+        +toggleStrategy()
+    }
+    class MusicLibraryPage {
+        +render()
+        +fetchTracks()
+        +handlePlay()
+    }
+    class GenerationPage {
+        +render()
+        +confirmGeneration()
+    }
+    
+    %% Controller Layer (Django Views)
+    class AuthViews {
+        +GoogleLoginView()
+        +MockLoginView()
+    }
+    class LibraryViews {
+        +MusicLibraryViewSet()
+        +MusicTrackViewSet()
+        +ShareTrackView()
+    }
+    class GenerationViews {
+        +GenerateMusicView()
+        +CheckGenerationStatusView()
+        +UserQuotaView()
+    }
+
+    %% Strategy Layer
+    class GenerationStrategy {
+        <<interface>>
+        +generate()
+    }
+    class SunoGenerationStrategy {
+        +generate()
+    }
+    class MockGenerationStrategy {
+        +generate()
+    }
+
+    %% Model Layer (Django Models)
+    class User {
+        +userId
+        +email
+        +role
+    }
+    class MusicLibrary {
+        +libraryId
+        +user_id
+    }
+    class MusicTrack {
+        +trackId
+        +title
+        +audio_url
+    }
+    class GenerationRequest {
+        +requestId
+        +prompt
+        +status
+    }
+    class TrackInvite {
+        +inviteId
+        +email
+        +status
+    }
+
+    %% Relationships
+    LandingPage --> AuthViews
+    MusicLibraryPage --> LibraryViews
+    GenerationPage --> GenerationViews
+
+    AuthViews --> User
+    
+    LibraryViews --> User
+    LibraryViews --> MusicLibrary
+    LibraryViews --> MusicTrack
+    LibraryViews --> TrackInvite
+
+    GenerationViews --> User
+    GenerationViews --> GenerationRequest
+    GenerationViews --> MusicTrack
+    GenerationViews --> GenerationStrategy
+
+    GenerationStrategy <|-- SunoGenerationStrategy
+    GenerationStrategy <|-- MockGenerationStrategy
+```
+
+### Generation Sequence Diagram
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend as React UI
+    participant Backend as Django API
+    participant Strategy as GenerationContext
+    participant DB as Database
+    participant Suno as Suno API
+
+    User->>Frontend: Fills prompt & clicks Generate
+    Frontend->>Backend: POST /api/generate-music/
+    Backend->>DB: Check User Quota
+    Backend->>DB: Create GenerationRequest (QUEUED)
+    Backend->>DB: Create MusicTrack (PROCESSING)
+    
+    alt User Role == MOCK_USER
+        Backend->>Strategy: Execute MockGenerationStrategy
+        Strategy->>DB: Find existing track
+        Strategy->>DB: Copy audio_url to new MusicTrack
+        Strategy->>DB: Update Status to SUCCESS
+        Strategy-->>Backend: Return Success
+        Backend-->>Frontend: 200 OK (Instant Success)
+    else User Role == NORMAL
+        Backend->>Strategy: Execute SunoGenerationStrategy
+        Strategy->>Suno: POST /api/v1/generate
+        Suno-->>Strategy: Task ID
+        Strategy->>DB: Update GenerationRequest (RUNNING)
+        Strategy-->>Backend: Return PROCESSING
+        Backend-->>Frontend: 200 OK (PROCESSING)
+        
+        loop Every 5 Seconds (UI Polling)
+            Frontend->>Backend: GET /api/check-generation/
+            Backend->>Suno: GET /api/v1/generate/record-info
+            Suno-->>Backend: Status (SUCCESS + Audio URL)
+            Backend->>DB: Update MusicTrack & Request (SUCCESS)
+            Backend-->>Frontend: 200 OK (SUCCESS)
+        end
+    end
+    
+    Frontend->>User: Redirect & Display Track in Library
+```
+
 ## Testing & Grading (Mock Strategy)
 
 To test the system without spending API credits, a secret **Mock UI Bypass** is implemented using the Strategy Pattern.
@@ -28,6 +170,7 @@ To test the system without spending API credits, a secret **Mock UI Bypass** is 
 
 > [!IMPORTANT]  
 > **Before running the project**, you MUST configure your environment variables. Please read the two dedicated setup guides included in the repository:
+>
 > - [Google OAuth 2.0 Setup Guide](GOOGLE_OAUTH_SETUP.md)
 > - [Suno API Setup Guide](SUNO_API_SETUP.md)
 
