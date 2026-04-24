@@ -245,24 +245,39 @@ python manage.py runserver
 
 ### 7. Route Endpoints (Localhost)
 
-The Django REST Framework is enabled, providing standard CRUD endpoints for our models.
+The Django REST Framework powers the backend. Here are the active custom and router endpoints available at `http://127.0.0.1:8000`:
 
-The following endpoints are available for testing:
-
+#### Authentication Endpoints
 ```bash
-http://127.0.0.1:8000/admin/ - Django admin interface
-http://127.0.0.1:8000/api/users/           - Supported: GET, POST
-http://127.0.0.1:8000/api/users/<id>/      - Supported: GET, PUT, PATCH, DELETE
-http://127.0.0.1:8000/api/libraries/       - Supported: GET, POST
-http://127.0.0.1:8000/api/libraries/<id>/  - Supported: GET, PUT, PATCH, DELETE
-http://127.0.0.1:8000/api/tracks/          - Supported: GET, POST
-http://127.0.0.1:8000/api/tracks/<id>/     - Supported: GET, PUT, PATCH, DELETE
+POST /api/auth/google/          # Initiate Google OAuth login
+POST /api/auth/google/callback/ # Handle Google OAuth callback & issue JWT
+POST /api/auth/verify-session/  # Verify active JWT and session token
+POST /api/auth/mock-login/      # Secret Mock Login bypass for grading
+```
 
-# and similarly for other models:
-http://127.0.0.1:8000/api/listening-activities/
-http://127.0.0.1:8000/api/generation-requests/
-http://127.0.0.1:8000/api/share-permissions/
-http://127.0.0.1:8000/api/email-invitations/
+#### Music Generation Endpoints
+```bash
+POST /api/generate-music/       # Submit a new generation prompt (Suno/Mock)
+GET  /api/check-generation/     # Poll generation status (requires request_id)
+GET  /api/user-quota/           # Fetch user's remaining coins/quota
+```
+
+#### Social / Sharing Endpoints
+```bash
+PATCH  /api/tracks/<id>/share/          # Update visibility or send track invite
+GET    /api/invites/pending/            # Fetch user's pending track invites
+PATCH  /api/invites/<id>/respond/       # Accept or reject an invite
+GET    /api/tracks/shared/              # Fetch tracks shared with the user
+DELETE /api/tracks/<id>/shared/         # Remove a track from shared library
+```
+
+#### Standard CRUD Router
+```bash
+/api/users/                 - GET, POST, PUT, PATCH, DELETE
+/api/libraries/             - GET, POST, PUT, PATCH, DELETE
+/api/tracks/                - GET, POST, PUT, PATCH, DELETE (Soft-Delete)
+/api/generation-requests/   - GET, POST, PUT, PATCH, DELETE
+/api/track-invites/         - GET, POST, PUT, PATCH, DELETE
 ```
 
 ---
