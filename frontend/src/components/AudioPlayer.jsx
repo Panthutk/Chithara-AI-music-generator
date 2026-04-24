@@ -14,9 +14,11 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, o
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isLooping, setIsLooping] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = () => setShowDropdown(false);
@@ -28,6 +30,7 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, o
     if (currentTrack && currentTrack.audio_url) {
       setIsPlaying(true);
       if (audioRef.current) {
+        audioRef.current.volume = volume; // ensure volume is applied
         audioRef.current.play().catch(e => console.error("Playback failed", e));
       }
     }
@@ -81,7 +84,7 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, o
 
   const handleEnded = () => {
     setIsPlaying(false);
-    if (onPlayNext) onPlayNext();
+    if (onPlayNext) onPlayNext(isShuffling);
   };
 
   const formatTime = (time) => {
@@ -102,6 +105,7 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, o
         onTimeUpdate={handleTimeUpdate}
         onEnded={handleEnded}
         onLoadedMetadata={handleTimeUpdate}
+        loop={isLooping}
       />
 
       {/* Left: Track Info */}
@@ -131,8 +135,13 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, o
       {/* Center: Controls */}
       <div className="flex flex-col items-center justify-center flex-1 max-w-2xl px-4">
         <div className="flex items-center justify-center gap-6 mb-2">
-          <button className="text-gray-400 hover:text-white transition-colors hidden sm:block"><ShuffleIcon fontSize="small" /></button>
-          <button onClick={onPlayPrev} className="text-white hover:text-emerald-400 transition-colors">
+          <button 
+            onClick={() => setIsShuffling(!isShuffling)} 
+            className={`transition-colors hidden sm:block ${isShuffling ? 'text-emerald-500' : 'text-gray-400 hover:text-white'}`}
+          >
+            <ShuffleIcon fontSize="small" />
+          </button>
+          <button onClick={() => onPlayPrev && onPlayPrev(isShuffling)} className="text-white hover:text-emerald-400 transition-colors">
             <SkipPreviousIcon />
           </button>
           <button
@@ -141,10 +150,15 @@ const AudioPlayer = ({ currentTrack, tracks, onPlayNext, onPlayPrev, onRename, o
           >
             {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
           </button>
-          <button onClick={onPlayNext} className="text-white hover:text-emerald-400 transition-colors">
+          <button onClick={() => onPlayNext && onPlayNext(isShuffling)} className="text-white hover:text-emerald-400 transition-colors">
             <SkipNextIcon />
           </button>
-          <button className="text-gray-400 hover:text-white transition-colors hidden sm:block"><RepeatIcon fontSize="small" /></button>
+          <button 
+            onClick={() => setIsLooping(!isLooping)} 
+            className={`transition-colors hidden sm:block ${isLooping ? 'text-emerald-500' : 'text-gray-400 hover:text-white'}`}
+          >
+            <RepeatIcon fontSize="small" />
+          </button>
         </div>
         <div className="flex items-center gap-3 w-full text-xs text-gray-400">
           <span className="w-10 text-right shrink-0">{formatTime(progress)}</span>

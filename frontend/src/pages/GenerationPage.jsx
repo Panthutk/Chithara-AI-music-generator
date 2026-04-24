@@ -14,6 +14,7 @@ const GenerationPage = () => {
   const [vocalGender, setVocalGender] = useState('m');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   useEffect(() => {
     let token = localStorage.getItem('chithara_token');
@@ -46,10 +47,14 @@ const GenerationPage = () => {
     }
   }, [navigate]);
 
-  const handleSubmit = async (e) => {
+  const handlePreview = (e) => {
     e.preventDefault();
     if (!user || isSubmitting) return;
+    setShowConfirmationModal(true);
+  };
 
+  const confirmGeneration = async () => {
+    setShowConfirmationModal(false);
     setIsSubmitting(true);
     try {
       const response = await fetch('http://localhost:8000/api/generate-music/', {
@@ -106,7 +111,7 @@ const GenerationPage = () => {
           <p className="text-gray-400 text-lg">Describe the music you want to hear, and our AI will bring it to life.</p>
         </header>
 
-        <form onSubmit={handleSubmit} className="bg-[#111111] border border-white/5 p-8 sm:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
+        <form onSubmit={handlePreview} className="bg-[#111111] border border-white/5 p-8 sm:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
           {/* Ambient glow */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
@@ -201,7 +206,7 @@ const GenerationPage = () => {
             <div className="pt-6 border-t border-white/5 mt-8">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !title || !prompt}
                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-400 text-black py-4 rounded-xl font-bold text-lg hover:brightness-110 active:scale-[0.99] transition-all disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isSubmitting ? (
@@ -209,15 +214,60 @@ const GenerationPage = () => {
                 ) : (
                   <>
                     <AutoAwesomeIcon className="w-5 h-5" />
-                    Generate Soundtrack
+                    Preview Generation
                   </>
                 )}
               </button>
             </div>
-
           </div>
         </form>
       </main>
+
+      {/* Confirmation Modal */}
+      {showConfirmationModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+          <div className="bg-[#141414] border border-white/10 rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden animate-[scale-in_0.2s_ease-out]">
+            <div className="p-8">
+              <h3 className="text-2xl font-bold text-white mb-2">Confirm Generation</h3>
+              <p className="text-gray-400 text-sm mb-8">Please review your music details before we start the AI engine.</p>
+              
+              <div className="space-y-5 bg-[#1a1a1a] rounded-2xl p-6 border border-white/5">
+                <div>
+                  <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Title</span>
+                  <span className="text-white font-medium text-lg">{title}</span>
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Genre & Style</span>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-sm font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{style}</span>
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Vocal Gender</span>
+                  <span className="text-gray-200">{vocalGender === 'm' ? 'Male' : vocalGender === 'f' ? 'Female' : 'None'}</span>
+                </div>
+                <div>
+                  <span className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Prompt</span>
+                  <p className="text-gray-300 text-sm italic border-l-2 border-white/10 pl-3 py-1">{prompt}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3 p-6 bg-[#0a0a0a] border-t border-white/5">
+              <button 
+                onClick={() => setShowConfirmationModal(false)}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmGeneration}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-black bg-gradient-to-tr from-emerald-500 to-teal-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 transition-all flex items-center justify-center"
+              >
+                Confirm & Generate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

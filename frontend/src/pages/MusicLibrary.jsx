@@ -25,6 +25,7 @@ const MusicLibrary = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   const [activeDropdownTrackId, setActiveDropdownTrackId] = useState(null);
@@ -54,6 +55,9 @@ const MusicLibrary = () => {
       }
       if (!e.target.closest('.more-options-container')) {
         setActiveDropdownTrackId(null);
+      }
+      if (!e.target.closest('.sort-dropdown-container')) {
+        setShowSortDropdown(false);
       }
     };
     document.addEventListener('click', handleClickOutside);
@@ -191,23 +195,7 @@ const MusicLibrary = () => {
     }
   };
 
-  const handlePlayNext = () => {
-    if (!currentTrack || tracks.length === 0) return;
-    const availableTracks = tracks.filter(t => t.status === 'AVAILABLE');
-    const currentIndex = availableTracks.findIndex(t => t.trackId === currentTrack.trackId);
-    if (currentIndex >= 0 && currentIndex < availableTracks.length - 1) {
-      setCurrentTrack(availableTracks[currentIndex + 1]);
-    }
-  };
 
-  const handlePlayPrev = () => {
-    if (!currentTrack || tracks.length === 0) return;
-    const availableTracks = tracks.filter(t => t.status === 'AVAILABLE');
-    const currentIndex = availableTracks.findIndex(t => t.trackId === currentTrack.trackId);
-    if (currentIndex > 0) {
-      setCurrentTrack(availableTracks[currentIndex - 1]);
-    }
-  };
 
   useEffect(() => {
     if (!user || (activeTab !== 1 && activeTab !== 2)) return;
@@ -282,6 +270,38 @@ const MusicLibrary = () => {
   };
 
   const displayedTracks = getFilteredAndSortedTracks();
+
+  const handlePlayNext = (isShuffling) => {
+    if (!currentTrack || displayedTracks.length === 0) return;
+    const availableTracks = displayedTracks.filter(t => t.status === 'AVAILABLE');
+    
+    if (isShuffling && availableTracks.length > 1) {
+      const randomIndex = Math.floor(Math.random() * availableTracks.length);
+      setCurrentTrack(availableTracks[randomIndex]);
+      return;
+    }
+
+    const currentIndex = availableTracks.findIndex(t => t.trackId === currentTrack.trackId);
+    if (currentIndex >= 0 && currentIndex < availableTracks.length - 1) {
+      setCurrentTrack(availableTracks[currentIndex + 1]);
+    }
+  };
+
+  const handlePlayPrev = (isShuffling) => {
+    if (!currentTrack || displayedTracks.length === 0) return;
+    const availableTracks = displayedTracks.filter(t => t.status === 'AVAILABLE');
+    
+    if (isShuffling && availableTracks.length > 1) {
+      const randomIndex = Math.floor(Math.random() * availableTracks.length);
+      setCurrentTrack(availableTracks[randomIndex]);
+      return;
+    }
+
+    const currentIndex = availableTracks.findIndex(t => t.trackId === currentTrack.trackId);
+    if (currentIndex > 0) {
+      setCurrentTrack(availableTracks[currentIndex - 1]);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -453,17 +473,31 @@ const MusicLibrary = () => {
             ) : tracks.length > 0 ? (
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-4 px-2">
-                  <div className="flex items-center text-gray-400 text-sm font-medium">
+                  <div className="flex items-center text-gray-400 text-sm font-medium relative sort-dropdown-container">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" /></svg>
-                    <select 
-                      value={sortBy}
-                      onChange={(e) => setSortBy(e.target.value)}
-                      className="bg-transparent border-none text-gray-400 hover:text-white cursor-pointer focus:outline-none focus:ring-0"
+                    <div 
+                      className="cursor-pointer hover:text-white transition-colors flex items-center gap-1"
+                      onClick={() => setShowSortDropdown(!showSortDropdown)}
                     >
-                      <option value="newest" className="bg-[#1a1a1a] text-white">Date (Newest)</option>
-                      <option value="oldest" className="bg-[#1a1a1a] text-white">Date (Oldest)</option>
-                      <option value="genre" className="bg-[#1a1a1a] text-white">Genre / Type</option>
-                    </select>
+                      {sortBy === 'newest' ? 'Date (Newest)' : sortBy === 'oldest' ? 'Date (Oldest)' : 'Genre / Type'}
+                      <svg className={`w-4 h-4 transition-transform ${showSortDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                    </div>
+                    {showSortDropdown && (
+                      <div className="absolute top-full left-0 mt-2 w-40 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl py-2 z-50">
+                        {['newest', 'oldest', 'genre'].map(option => (
+                          <button
+                            key={option}
+                            onClick={() => {
+                              setSortBy(option);
+                              setShowSortDropdown(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm transition-colors ${sortBy === option ? 'text-emerald-400 bg-white/5 font-semibold' : 'text-gray-300 hover:bg-white/5 hover:text-white'}`}
+                          >
+                            {option === 'newest' ? 'Date (Newest)' : option === 'oldest' ? 'Date (Oldest)' : 'Genre / Type'}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -817,7 +851,7 @@ const MusicLibrary = () => {
 
       <AudioPlayer
         currentTrack={currentTrack}
-        tracks={tracks.filter(t => t.status === 'AVAILABLE')}
+        tracks={displayedTracks.filter(t => t.status === 'AVAILABLE')}
         onPlayNext={handlePlayNext}
         onPlayPrev={handlePlayPrev}
         onRename={activeTab !== 2 ? (track) => { setEditingTrack(track); setNewTitle(track.title); } : null}
