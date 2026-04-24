@@ -2,13 +2,7 @@ from django.db import models
 
 
 class MusicTrack(models.Model):
-    class Genre(models.TextChoices):
-        POP = 'POP', 'Pop'
-        ROCK = 'ROCK', 'Rock'
-        JAZZ = 'JAZZ', 'Jazz'
-        HIPHOP = 'HIPHOP', 'Hip Hop'
-        CLASSICAL = 'CLASSICAL', 'Classical'
-        OTHER = 'OTHER', 'Other'
+
 
     class Status(models.TextChoices):
         AVAILABLE = 'AVAILABLE', 'Available'
@@ -24,7 +18,7 @@ class MusicTrack(models.Model):
     title = models.CharField(max_length=255)
     duration = models.IntegerField(
         help_text="Duration in seconds", null=True, blank=True)
-    genre = models.CharField(max_length=50, choices=Genre.choices)
+    genre = models.CharField(max_length=255)
     mood = models.CharField(max_length=100)
     occasion = models.CharField(max_length=100)
     status = models.CharField(

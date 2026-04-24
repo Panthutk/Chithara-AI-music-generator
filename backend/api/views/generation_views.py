@@ -54,7 +54,7 @@ class GenerateMusicView(APIView):
         # Create a music track in processing state
         track = MusicTrack.objects.create(
             title=title,
-            genre=MusicTrack.Genre.OTHER,
+            genre=style[:255],
             mood='Unknown',
             occasion='Unknown',
             status=MusicTrack.Status.PROCESSING,
