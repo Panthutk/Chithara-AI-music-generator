@@ -284,6 +284,15 @@ DELETE /api/tracks/<id>/shared/         # Remove a track from shared library
 
 ## Database Structure
 
+### Soft Delete Architecture
+> [!IMPORTANT]
+> To ensure data integrity, this API strictly enforces a **Soft Delete** pattern. 
+> 
+> * **Music Tracks**: Deleting a track via `DELETE /api/tracks/<id>/` (or via the UI) intercepts the Django REST Framework's `destroy` method and updates the track's status to `HIDDEN` instead of hard-deleting the row from the database.
+> * **Shared Tracks**: Removing a shared track from a user's library hits `DELETE /api/tracks/<id>/shared/`, which updates the associated `TrackInvite` status to `REMOVED`.
+> 
+> Permanent hard deletion is disabled across user-facing endpoints.
+
 The following tables describe the actual models used in the API.
 
 ### User
