@@ -241,12 +241,24 @@ Alternatively, you can create your own custom superuser:
 python manage.py createsuperuser
 ```
 
-### 6. Run the Development Server
+### 6. Run the Development Servers
 
-Start the Django development server:
+**Backend (Django):**
+
+Start the Django development server (ensure you are in the `backend` directory with your virtual environment activated):
 
 ```bash
 python manage.py runserver
+```
+
+**Frontend (React):**
+
+Open a new terminal, navigate to the `frontend` directory, install the required packages (first time only), and start the Vite development server:
+
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
 ### 7. Route Endpoints (Localhost)
