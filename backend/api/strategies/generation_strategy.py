@@ -92,8 +92,8 @@ class SunoGenerationStrategy(GenerationStrategy):
 
 class MockGenerationStrategy(GenerationStrategy):
     def generate(self, gen_request, track, prompt, style, negative, vocal_gender):
-        # We find an existing track from ANY user that has an audio_url to copy
-        existing_track = MusicTrack.objects.filter(status=MusicTrack.Status.AVAILABLE).exclude(audio_url__isnull=True).exclude(audio_url__exact='').first()
+        # We find a random existing track from ANY user that has an audio_url to copy
+        existing_track = MusicTrack.objects.filter(status=MusicTrack.Status.AVAILABLE).exclude(audio_url__isnull=True).exclude(audio_url__exact='').order_by('?').first()
         
         if existing_track:
             track.audio_url = existing_track.audio_url
