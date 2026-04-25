@@ -32,6 +32,11 @@ classDiagram
         +fetchTracks()
         +handlePlay()
     }
+    class SharedTrackPage {
+        +render()
+        +fetchSharedTracks()
+        +handlePlay()
+    }
     class GenerationPage {
         +render()
         +confirmGeneration()
@@ -94,6 +99,7 @@ classDiagram
     %% Relationships
     LandingPage --> AuthViews
     MusicLibraryPage --> LibraryViews
+    SharedTrackPage --> LibraryViews
     GenerationPage --> GenerationViews
 
     AuthViews --> User

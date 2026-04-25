@@ -23,7 +23,7 @@ Before creating credentials, you MUST configure the OAuth consent screen.
    - `.../auth/userinfo.email`
    - `.../auth/userinfo.profile`
    - `openid`
-   Once checked, click **Update** at the bottom of the drawer, then click **Save and Continue**.
+     Once checked, click **Update** at the bottom of the drawer, then click **Save and Continue**.
 6. **Test Users Screen**: Skip adding test users. Click **Save and Continue**.
 7. On the OAuth consent screen Dashboard, click **PUBLISH APP** to move it to "In production", allowing anyone to test without needing their email whitelisted!
 
@@ -42,13 +42,13 @@ Before creating credentials, you MUST configure the OAuth consent screen.
 5. Under **Authorized JavaScript origins**, click **+ ADD URI** and enter exactly:
 
    - `http://localhost:7999`
-   - [http://127.0.0.1:7999](http://127.0.0.1:7999)
-   - [http://localhost:8000](http://localhost:8000)
-   - [http://127.0.0.1:8000](http://127.0.0.1:8000)
+   - [`http://127.0.0.1:7999`](http://127.0.0.1:7999)
+   - [`http://localhost:8000`](http://localhost:8000)
+   - [`http://127.0.0.1:8000`](http://127.0.0.1:8000)
 6. Under **Authorized redirect URIs**, click **+ ADD URI** and enter exactly:
 
-   - [http://localhost:8000/api/auth/google/callback/](http://localhost:8000/api/auth/google/callback/)
-   - <http://127.0.0.1:8000/api/auth/google/callback/>
+   - [`http://localhost:8000/api/auth/google/callback/`](http://localhost:8000/api/auth/google/callback/)
+   - [`http://127.0.0.1:8000/api/auth/google/callback/`](http://127.0.0.1:8000/api/auth/google/callback/)
 7. Click **Create**.
 
 ## 4. Get Your Keys
