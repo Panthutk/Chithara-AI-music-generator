@@ -2,6 +2,8 @@
 
 This project is part of 0129243-65 Principle of Software Design
 
+**Presentation Video:** [https://youtu.be/7ccoewW8Ph4](https://youtu.be/7ccoewW8Ph4)
+
 ## Key Features
 
 - **Google OAuth 2.0 Authentication**: Secure login flow with single-session enforcement via JWT and database tracking.
@@ -41,7 +43,7 @@ classDiagram
         +render()
         +confirmGeneration()
     }
-    
+  
     %% Controller Layer (Django Views)
     class AuthViews {
         +GoogleLoginView()
@@ -103,7 +105,7 @@ classDiagram
     GenerationPage --> GenerationViews
 
     AuthViews --> User
-    
+  
     LibraryViews --> User
     LibraryViews --> MusicLibrary
     LibraryViews --> MusicTrack
@@ -134,7 +136,7 @@ sequenceDiagram
     Backend->>DB: Check User Quota
     Backend->>DB: Create GenerationRequest (QUEUED)
     Backend->>DB: Create MusicTrack (PROCESSING)
-    
+  
     alt User Role == MOCK_USER
         Backend->>Strategy: Execute MockGenerationStrategy
         Strategy->>DB: Find existing track
@@ -149,7 +151,7 @@ sequenceDiagram
         Strategy->>DB: Update GenerationRequest (RUNNING)
         Strategy-->>Backend: Return PROCESSING
         Backend-->>Frontend: 200 OK (PROCESSING)
-        
+    
         loop Every 5 Seconds (UI Polling)
             Frontend->>Backend: GET /api/check-generation/
             Backend->>Suno: GET /api/v1/generate/record-info
@@ -158,7 +160,7 @@ sequenceDiagram
             Backend-->>Frontend: 200 OK (SUCCESS)
         end
     end
-    
+  
     Frontend->>User: Redirect & Display Track in Library
 ```
 
@@ -174,8 +176,7 @@ To test the system without spending API credits, a secret **Mock UI Bypass** is 
 
 ## Setup Instructions
 
-> [!IMPORTANT]  
-> **Before running the project**, you MUST configure your environment variables. Please read the two dedicated setup guides included in the repository:
+> [!IMPORTANT]**Before running the project**, you MUST configure your environment variables. Please read the two dedicated setup guides included in the repository:
 >
 > - [Google OAuth 2.0 Setup Guide](GOOGLE_OAUTH_SETUP.md)
 > - [Suno API Setup Guide](SUNO_API_SETUP.md)
@@ -219,13 +220,17 @@ Install the required packages using `pip`. Ensure your virtual environment is ac
 pip install -r requirements.txt
 ```
 
-### 4. Apply Database Migrations
+### 4. Database Setup & Migrations
 
-Apply the database migrations to set up the database schema:
+> [!TIP]
+> You **do not** need to manually run any database commands. Just start the server normally!
 
-```bash
-python manage.py migrate
-```
+Instead, the database is generated automatically behind the scenes:
+
+1. When you run the `python manage.py runserver` command, the system automatically runs the database migrations to build the necessary tables.
+2. It then runs a script that automatically creates the required test accounts (`special1@chitharamock.com` and `special2@chitharamock.com`) along with some sample songs.
+
+This ensures the mock generation system always works immediately after cloning the repository, without requiring any extra setup steps from you!
 
 ### 5. Create a Superuser
 
@@ -266,6 +271,7 @@ npm run dev
 The Django REST Framework powers the backend. Here are the active custom and router endpoints available at `http://127.0.0.1:8000`:
 
 #### Authentication Endpoints
+
 ```bash
 POST /api/auth/google/          # Initiate Google OAuth login
 POST /api/auth/google/callback/ # Handle Google OAuth callback & issue JWT
@@ -274,6 +280,7 @@ POST /api/auth/mock-login/      # Secret Mock Login bypass for grading
 ```
 
 #### Music Generation Endpoints
+
 ```bash
 POST /api/generate-music/       # Submit a new generation prompt (Suno/Mock)
 GET  /api/check-generation/     # Poll generation status (requires request_id)
@@ -281,6 +288,7 @@ GET  /api/user-quota/           # Fetch user's remaining coins/quota
 ```
 
 #### Social / Sharing Endpoints
+
 ```bash
 PATCH  /api/tracks/<id>/share/          # Update visibility or send track invite
 GET    /api/invites/pending/            # Fetch user's pending track invites
@@ -290,6 +298,7 @@ DELETE /api/tracks/<id>/shared/         # Remove a track from shared library
 ```
 
 #### Standard CRUD Router
+
 ```bash
 /api/users/                 - GET, POST, PUT, PATCH, DELETE
 /api/libraries/             - GET, POST, PUT, PATCH, DELETE
@@ -303,12 +312,13 @@ DELETE /api/tracks/<id>/shared/         # Remove a track from shared library
 ## Database Structure
 
 ### Soft Delete Architecture
+
 > [!IMPORTANT]
-> To ensure data integrity, this API strictly enforces a **Soft Delete** pattern. 
-> 
-> * **Music Tracks**: Deleting a track via `DELETE /api/tracks/<id>/` (or via the UI) intercepts the Django REST Framework's `destroy` method and updates the track's status to `HIDDEN` instead of hard-deleting the row from the database.
-> * **Shared Tracks**: Removing a shared track from a user's library hits `DELETE /api/tracks/<id>/shared/`, which updates the associated `TrackInvite` status to `REMOVED`.
-> 
+> To ensure data integrity, this API strictly enforces a **Soft Delete** pattern.
+>
+> - **Music Tracks**: Deleting a track via `DELETE /api/tracks/<id>/` (or via the UI) intercepts the Django REST Framework's `destroy` method and updates the track's status to `HIDDEN` instead of hard-deleting the row from the database.
+> - **Shared Tracks**: Removing a shared track from a user's library hits `DELETE /api/tracks/<id>/shared/`, which updates the associated `TrackInvite` status to `REMOVED`.
+>
 > Permanent hard deletion is disabled across user-facing endpoints.
 
 The following tables describe the actual models used in the API.
@@ -372,3 +382,31 @@ The following tables describe the actual models used in the API.
 | `invitee`       | ForeignKey    | Cascade, Null/Blank | Recipient user account (if registered).        |
 | `status`        | CharField(50) | Choices, Default    | Status (PENDING, ACCEPTED, REJECTED, REMOVED). |
 | `created_at`    | DateTimeField | Auto Now Add        | Timestamp of the sent invitation.              |
+
+---
+
+## Assessment Answers
+
+**1. Does the student have a up-to-date domain model?**
+Yes, there is a domain model provided in `ref_data/DomainDiagram.pdf` and `ref_data/DomainDiagram.txt`. It represents a high-level design. Some entities from the original domain model (like `SharePermission` and `EmailInvitation`) were merged into `TrackInvite` during implementation, and `ListeningActivity` was omitted.
+
+**2. Does the student have a class diagram that synchronized with the code?**
+Yes. A Mermaid class diagram is included directly in this `README.md` under the "Class Architecture Diagram" section. It accurately reflects the actual models, views, and strategy classes present in the codebase.
+
+**3. Does the class diagram follow the (MVT) architecture?**
+Yes. The class diagram separates concerns appropriately, showing the Model Layer (Django Models), Controller Layer (Django Views), and Presentation Layer (React Frontend, taking the place of Django Templates in a decoupled MVT architecture).
+
+**4. Is there only one class per file?**
+Yes. In the `backend/api/models/` directory, each Django model is defined in its own separate file.
+
+**5. Are file names consistent with their corresponding class names?**
+Yes. The file names follow `snake_case` conventions that perfectly match their `PascalCase` class equivalents (e.g., `user.py` -> `User`, `music_track.py` -> `MusicTrack`, `generation_request.py` -> `GenerationRequest`).
+
+**6. Is there a sequence diagram for the song generation use case?**
+Yes. There is a Mermaid sequence diagram in this `README.md` under the "Generation Sequence Diagram" section detailing the interactions between the User, Frontend, Backend, Strategy Pattern, Database, and Suno API.
+
+**7. Do the model classes follow the domain model?**
+Mostly, yes. The core entities (`User`, `MusicLibrary`, `MusicTrack`, `GenerationRequest`) directly map to the domain model. However, for practical implementation reasons, `EmailInvitation` and `SharePermission` were consolidated into the `TrackInvite` model, and `ListeningActivity` is not tracked in the current database schema.
+
+**8. How complete is the application?**
+The application is highly complete and fully functional. It includes working Google OAuth authentication, actual AI music generation integrated with the Suno API, a quota system, track sharing/invitations, a custom React audio player, and a strategy pattern implementation to allow mock generation testing without consuming real API credits.

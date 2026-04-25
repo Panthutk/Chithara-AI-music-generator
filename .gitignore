@@ -151,3 +151,7 @@ __pycache__/
 venv/
 env/
 ENV/
+
+# Database
+db.sqlite3
+*.sqlite3
