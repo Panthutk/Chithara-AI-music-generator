@@ -153,6 +153,7 @@ const GenerationPage = () => {
               <input
                 type="text"
                 required
+                maxLength={100}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Neon Midnight Drive"
@@ -166,6 +167,7 @@ const GenerationPage = () => {
               <textarea
                 required
                 rows="4"
+                maxLength={500}
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 placeholder="A high energy synthwave track with heavy bass drops and a retro futuristic feel..."
@@ -180,6 +182,7 @@ const GenerationPage = () => {
                 <input
                   type="text"
                   required
+                  maxLength={100}
                   value={style}
                   onChange={(e) => setStyle(e.target.value)}
                   placeholder="e.g. Classical, Synthwave, Pop"
