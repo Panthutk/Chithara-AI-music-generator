@@ -176,7 +176,8 @@ To test the system without spending API credits, a secret **Mock UI Bypass** is 
 
 ## Setup Instructions
 
-> [!IMPORTANT]**Before running the project**, you MUST configure your environment variables. Please read the two dedicated setup guides included in the repository:
+> [!IMPORTANT]
+> **Before running the project**, you MUST configure your environment variables. Please read the two dedicated setup guides included in the repository:
 >
 > - [Google OAuth 2.0 Setup Guide](GOOGLE_OAUTH_SETUP.md)
 > - [Suno API Setup Guide](SUNO_API_SETUP.md)
